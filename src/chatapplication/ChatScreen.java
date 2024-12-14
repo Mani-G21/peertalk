@@ -49,7 +49,7 @@ public class ChatScreen extends javax.swing.JFrame {
             System.out.println("Connection error: " + e.getMessage());
         }
         initComponents();
-        initializeClients();
+//        initializeClients();
         
         
         
@@ -61,11 +61,11 @@ public class ChatScreen extends javax.swing.JFrame {
         chatPanel.setLayout(new BoxLayout(chatPanel, BoxLayout.Y_AXIS));
     }
 
-  private void initializeClients() {
-    serverOut.println(XMLHandler.createXML(userName, "server", ""));
-    Thread serverListenerThread = new Thread(new ServerListener(socket, chatPanel, recentChatMainPanel, recentChatScrollPane));
-    serverListenerThread.start();
-}
+//  private void initializeClients() {
+//    serverOut.println(XMLHandler.createXML(userName, "server", ""));
+//    Thread serverListenerThread = new Thread(new ServerListener(socket, chatPanel, recentChatMainPanel, recentChatScrollPane));
+//    serverListenerThread.start();
+//}
 
 
     /**
@@ -99,7 +99,6 @@ public class ChatScreen extends javax.swing.JFrame {
         newChatSeparator = new javax.swing.JSeparator();
         jPanel8 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
-        jButton1 = new javax.swing.JButton();
 
         jToggleButton1.setText("jToggleButton1");
 
@@ -313,35 +312,23 @@ public class ChatScreen extends javax.swing.JFrame {
         jPanel8.setBackground(new java.awt.Color(255, 255, 255));
 
         jLabel2.setFont(new java.awt.Font("Segoe UI Historic", 1, 24)); // NOI18N
-        jLabel2.setText("Connected Users");
-
-        jButton1.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
-        jButton1.setText("Refresh");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
-            }
-        });
+        jLabel2.setText("Chats");
 
         javax.swing.GroupLayout jPanel8Layout = new javax.swing.GroupLayout(jPanel8);
         jPanel8.setLayout(jPanel8Layout);
         jPanel8Layout.setHorizontalGroup(
             jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel8Layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(42, 42, 42)
                 .addComponent(jLabel2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 74, Short.MAX_VALUE)
-                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(23, 23, 23))
+                .addContainerGap(164, Short.MAX_VALUE))
         );
         jPanel8Layout.setVerticalGroup(
             jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel8Layout.createSequentialGroup()
-                .addContainerGap(23, Short.MAX_VALUE)
-                .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel2))
-                .addGap(17, 17, 17))
+                .addContainerGap(40, Short.MAX_VALUE)
+                .addComponent(jLabel2)
+                .addGap(30, 30, 30))
         );
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -391,52 +378,19 @@ public class ChatScreen extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void sendButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendButtonActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_sendButtonActionPerformed
-
     private void newChatTxtActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newChatTxtActionPerformed
         String newChatPerson = newChatTxt.getText();
         if(!newChatPerson.equals("")){
-            serverOut.println(XMLHandler.createXML(userName, "server", newChatPerson));
+            serverOut.println(XMLHandler.createXML(userName, "server", "loadReceiver", newChatPerson));
             Thread serverListenerThread = new Thread(new ServerListener(socket, chatPanel, recentChatMainPanel, recentChatScrollPane));
             serverListenerThread.start();
         }
     }//GEN-LAST:event_newChatTxtActionPerformed
 
-    private void homeButtonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_homeButtonMouseClicked
-        currentChatBodyPanel.setVisible(false);
-        currentChatHeader.setVisible(false);
-        currentChatLabel.setVisible(false);
-        currentChatTxt.setVisible(false);
-        sendButton.setVisible(false);
-        chatPanel.setVisible(false);
-        chatPanel.removeAll();
-        
-        chatPanel.revalidate();
-        chatPanel.repaint();
-    }//GEN-LAST:event_homeButtonMouseClicked
+    private void sendButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_sendButtonActionPerformed
 
-    private void recentChatLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_recentChatLabelMouseClicked
-       handleUI(evt);
-       
-    }//GEN-LAST:event_recentChatLabelMouseClicked
-
-    public static void handleUI(java.awt.event.MouseEvent evt){
-        chatPanel.removeAll();
-        
-        chatPanel.revalidate();
-        chatPanel.repaint();
-         JLabel selectedLabel = (JLabel) evt.getComponent();
-        currentChatLabel.setText(selectedLabel.getText());
-        currentChatBodyPanel.setVisible(true);
-        chatPanel.setVisible(true);
-        currentChatHeader.setVisible(true);
-        currentChatLabel.setVisible(true);
-        currentChatTxt.setVisible(true);
-        sendButton.setVisible(true);
-    }
-    
     private void sendButtonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_sendButtonMouseClicked
         String message = currentChatTxt.getText();
 
@@ -455,7 +409,7 @@ public class ChatScreen extends javax.swing.JFrame {
             currentChatTxt.requestFocus();
 
             String toClient = currentChatLabel.getText();
-            serverOut.println(XMLHandler.createXML(userName, toClient, message));
+            serverOut.println(XMLHandler.createXML(userName, toClient, "message", message));
 
         }
     }//GEN-LAST:event_sendButtonMouseClicked
@@ -478,15 +432,44 @@ public class ChatScreen extends javax.swing.JFrame {
             currentChatTxt.requestFocus();
 
             String toClient = currentChatLabel.getText();
-            serverOut.println(XMLHandler.createXML("mani", toClient, message));
-            
+            serverOut.println(XMLHandler.createXML("mani", toClient,"message",  message));
+
         }
     }//GEN-LAST:event_currentChatTxtActionPerformed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        serverOut.println(XMLHandler.createXML(userName, "server", ""));
-    }//GEN-LAST:event_jButton1ActionPerformed
+    private void recentChatLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_recentChatLabelMouseClicked
+        handleUI(evt);
 
+    }//GEN-LAST:event_recentChatLabelMouseClicked
+
+    private void homeButtonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_homeButtonMouseClicked
+        currentChatBodyPanel.setVisible(false);
+        currentChatHeader.setVisible(false);
+        currentChatLabel.setVisible(false);
+        currentChatTxt.setVisible(false);
+        sendButton.setVisible(false);
+        chatPanel.setVisible(false);
+        chatPanel.removeAll();
+
+        chatPanel.revalidate();
+        chatPanel.repaint();
+    }//GEN-LAST:event_homeButtonMouseClicked
+
+    public static void handleUI(java.awt.event.MouseEvent evt){
+        chatPanel.removeAll();
+        
+        chatPanel.revalidate();
+        chatPanel.repaint();
+         JLabel selectedLabel = (JLabel) evt.getComponent();
+        currentChatLabel.setText(selectedLabel.getText());
+        currentChatBodyPanel.setVisible(true);
+        chatPanel.setVisible(true);
+        currentChatHeader.setVisible(true);
+        currentChatLabel.setVisible(true);
+        currentChatTxt.setVisible(true);
+        sendButton.setVisible(true);
+    }
+    
     private static Socket socket;
     private static String userName;
     private static BufferedReader userInput;
@@ -498,7 +481,6 @@ public class ChatScreen extends javax.swing.JFrame {
     public static javax.swing.JLabel currentChatLabel;
     public static javax.swing.JTextField currentChatTxt;
     private javax.swing.JLabel homeButton;
-    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
