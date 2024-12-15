@@ -282,38 +282,32 @@ public class Login extends javax.swing.JFrame {
         return emailField.getText();
     }
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-
         String userName = getUserName();
         String email = getEmail();
+
+        String sql = "SELECT * FROM users WHERE username = ? AND email = ?";
+        PreparedStatement ps;
+
         try {
-            socket = new Socket("127.0.0.1", 8761);
-            serverOut = new PrintWriter(socket.getOutputStream(), true);
-            BufferedReader brServer = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            ps = connection.prepareStatement(sql);
+            ps.setString(1, userName);
+            ps.setString(2, email);
+            ResultSet rs = ps.executeQuery();
 
-            serverOut.println(userName);
-            serverOut.println(XMLHandler.createXML(userName, "server", "auth", email));
-
-            // Read server response
-            String isValid = brServer.readLine();
-
-            // If login is successful
-            if (isValid.equals("true")) {
+            if (rs.next()) {
                 JOptionPane.showMessageDialog(this, "LOGGED IN", "SUCCESS", JOptionPane.INFORMATION_MESSAGE);
                 new ChatScreen(getUserName()).setVisible(true);
                 this.dispose();
+
             } else {
-                // Handle login failure
                 JOptionPane.showMessageDialog(this, "Wrong Username/Password", "Error", JOptionPane.ERROR_MESSAGE);
 
             }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
 
-            // Close socket connection after handling response
-            socket.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Connection error: " + e.getMessage());
         }
+
     }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
@@ -351,10 +345,6 @@ public class Login extends javax.swing.JFrame {
         });
     }
 
-    private static Socket socket;
-    private static String userName;
-    private static BufferedReader userInput;
-    private static PrintWriter serverOut;
     private final Connection connection;
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField emailField;

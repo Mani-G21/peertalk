@@ -30,7 +30,6 @@ import javax.swing.SwingConstants;
  *
  * @author manib
  */
-
 public class ChatScreen extends javax.swing.JFrame {
 
     /**
@@ -49,10 +48,8 @@ public class ChatScreen extends javax.swing.JFrame {
             System.out.println("Connection error: " + e.getMessage());
         }
         initComponents();
-//        initializeClients();
-        
-        
-        
+        initializeClients();
+
         currentChatBodyPanel.setVisible(false);
         currentChatHeader.setVisible(false);
         currentChatLabel.setVisible(false);
@@ -61,13 +58,11 @@ public class ChatScreen extends javax.swing.JFrame {
         chatPanel.setLayout(new BoxLayout(chatPanel, BoxLayout.Y_AXIS));
     }
 
-//  private void initializeClients() {
-//    serverOut.println(XMLHandler.createXML(userName, "server", ""));
-//    Thread serverListenerThread = new Thread(new ServerListener(socket, chatPanel, recentChatMainPanel, recentChatScrollPane));
-//    serverListenerThread.start();
-//}
-
-
+  private void initializeClients() {
+    serverOut.println(XMLHandler.createXML(userName, "server", ""));
+    Thread serverListenerThread = new Thread(new ServerListener(socket, chatPanel, recentChatMainPanel, recentChatScrollPane));
+    serverListenerThread.start();
+}
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -380,8 +375,8 @@ public class ChatScreen extends javax.swing.JFrame {
 
     private void newChatTxtActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newChatTxtActionPerformed
         String newChatPerson = newChatTxt.getText();
-        if(!newChatPerson.equals("")){
-            serverOut.println(XMLHandler.createXML(userName, "server", "loadReceiver", newChatPerson));
+        if (!newChatPerson.equals("")) {
+            serverOut.println(XMLHandler.createXML(userName, "server", newChatPerson));
             Thread serverListenerThread = new Thread(new ServerListener(socket, chatPanel, recentChatMainPanel, recentChatScrollPane));
             serverListenerThread.start();
         }
@@ -409,7 +404,7 @@ public class ChatScreen extends javax.swing.JFrame {
             currentChatTxt.requestFocus();
 
             String toClient = currentChatLabel.getText();
-            serverOut.println(XMLHandler.createXML(userName, toClient, "message", message));
+            serverOut.println(XMLHandler.createXML(userName, toClient, message));
 
         }
     }//GEN-LAST:event_sendButtonMouseClicked
@@ -432,7 +427,7 @@ public class ChatScreen extends javax.swing.JFrame {
             currentChatTxt.requestFocus();
 
             String toClient = currentChatLabel.getText();
-            serverOut.println(XMLHandler.createXML("mani", toClient,"message",  message));
+            serverOut.println(XMLHandler.createXML("mani", toClient, message));
 
         }
     }//GEN-LAST:event_currentChatTxtActionPerformed
@@ -455,12 +450,12 @@ public class ChatScreen extends javax.swing.JFrame {
         chatPanel.repaint();
     }//GEN-LAST:event_homeButtonMouseClicked
 
-    public static void handleUI(java.awt.event.MouseEvent evt){
+    public static void handleUI(java.awt.event.MouseEvent evt) {
         chatPanel.removeAll();
-        
+
         chatPanel.revalidate();
         chatPanel.repaint();
-         JLabel selectedLabel = (JLabel) evt.getComponent();
+        JLabel selectedLabel = (JLabel) evt.getComponent();
         currentChatLabel.setText(selectedLabel.getText());
         currentChatBodyPanel.setVisible(true);
         chatPanel.setVisible(true);
@@ -469,7 +464,7 @@ public class ChatScreen extends javax.swing.JFrame {
         currentChatTxt.setVisible(true);
         sendButton.setVisible(true);
     }
-    
+
     private static Socket socket;
     private static String userName;
     private static BufferedReader userInput;
@@ -500,6 +495,7 @@ public class ChatScreen extends javax.swing.JFrame {
     // End of variables declaration//GEN-END:variables
 
 }
+
 class ServerListener implements Runnable {
 
     private final Socket socket;
@@ -520,15 +516,15 @@ class ServerListener implements Runnable {
             String incomingMessage;
 
             while ((incomingMessage = serverIn.readLine()) != null) {
-                
+
                 if (incomingMessage.startsWith("[")) {
                     recentChatMainPanel.removeAll();
                     System.out.println("Received user list: " + incomingMessage);
                     updateUserList(incomingMessage);
-                    
-                    for(Component cp : recentChatMainPanel.getComponents()){
-            System.out.println(cp);
-        }
+
+                    for (Component cp : recentChatMainPanel.getComponents()) {
+                        System.out.println(cp);
+                    }
                 } else if (incomingMessage.startsWith("<message>")) {
                     System.out.println("Received message: " + incomingMessage);
                     displayChatMessage(incomingMessage);
@@ -540,7 +536,7 @@ class ServerListener implements Runnable {
     }
 
     private void updateUserList(String userListMessage) {
-        
+
         String userString = "(\\w+)";
         Pattern userPattern = Pattern.compile(userString);
         Matcher userMatcher = userPattern.matcher(userListMessage);
@@ -552,7 +548,6 @@ class ServerListener implements Runnable {
 
         }
 
-       
         recentChatMainPanel.revalidate();
         recentChatMainPanel.repaint();
     }
@@ -567,7 +562,7 @@ class ServerListener implements Runnable {
             messageLabel.setForeground(Color.BLACK);
             messageLabel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
             messageLabel.setFont(new Font("Times New Roman", Font.PLAIN, 24));
-            
+
             chatPanel.add(messageLabel);
             chatPanel.revalidate();
             chatPanel.repaint();
@@ -577,51 +572,50 @@ class ServerListener implements Runnable {
     }
 
     private void addRecentChat(String userName, String iconPath) {
-    // Set BoxLayout on recentChatMainPanel for vertical stacking
-    if (!(recentChatMainPanel.getLayout() instanceof BoxLayout)) {
-        recentChatMainPanel.setLayout(new BoxLayout(recentChatMainPanel, BoxLayout.Y_AXIS));
-    }
-
-    // Create a new panel for the recent chat
-    JPanel recentChatPanel = new JPanel();
-    recentChatPanel.setBackground(new java.awt.Color(255, 255, 255));
-    recentChatPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(204, 204, 204)));
-    recentChatPanel.setMaximumSize(new Dimension(397, 100)); // Set consistent size for the panel
-    recentChatPanel.setLayout(new BorderLayout()); // Use BorderLayout to make the label fill the entire panel
-
-    // Create and configure the label
-    JLabel recentChatLabel = new JLabel();
-    recentChatLabel.setFont(new java.awt.Font("Segoe UI", 0, 24)); // Set font
-    recentChatLabel.setHorizontalAlignment(SwingConstants.CENTER);
-    recentChatLabel.setText(userName);
-    recentChatLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
-    
-    if (iconPath != null) {
-        recentChatLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource(iconPath)));
-    }
-
-    // Add mouse listener to handle click events on the label
-    recentChatLabel.addMouseListener(new java.awt.event.MouseAdapter() {
-        public void mouseClicked(java.awt.event.MouseEvent evt) {
-            ChatScreen.handleUI(evt);
+        // Set BoxLayout on recentChatMainPanel for vertical stacking
+        if (!(recentChatMainPanel.getLayout() instanceof BoxLayout)) {
+            recentChatMainPanel.setLayout(new BoxLayout(recentChatMainPanel, BoxLayout.Y_AXIS));
         }
-    });
 
-    // Add the label to the center of recentChatPanel to make it fill the entire panel
-    recentChatPanel.add(recentChatLabel, BorderLayout.CENTER);
+        // Create a new panel for the recent chat
+        JPanel recentChatPanel = new JPanel();
+        recentChatPanel.setBackground(new java.awt.Color(255, 255, 255));
+        recentChatPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(204, 204, 204)));
+        recentChatPanel.setMaximumSize(new Dimension(397, 100)); // Set consistent size for the panel
+        recentChatPanel.setLayout(new BorderLayout()); // Use BorderLayout to make the label fill the entire panel
 
-    // Add a vertical space (strut) between panels
-    recentChatMainPanel.add(Box.createVerticalStrut(10));
+        // Create and configure the label
+        JLabel recentChatLabel = new JLabel();
+        recentChatLabel.setFont(new java.awt.Font("Segoe UI", 0, 24)); // Set font
+        recentChatLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        recentChatLabel.setText(userName);
+        recentChatLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-    // Add the recentChatPanel to recentChatMainPanel
-    recentChatMainPanel.add(recentChatPanel);
+        if (iconPath != null) {
+            recentChatLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource(iconPath)));
+        }
 
-    // Refresh the recentChatMainPanel and scroll pane to reflect the new components
-    recentChatMainPanel.revalidate();
-    recentChatMainPanel.repaint();
+        // Add mouse listener to handle click events on the label
+        recentChatLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                ChatScreen.handleUI(evt);
+            }
+        });
 
-    System.out.println("Added recent chat panel for user: " + userName);
-}
+        // Add the label to the center of recentChatPanel to make it fill the entire panel
+        recentChatPanel.add(recentChatLabel, BorderLayout.CENTER);
 
+        // Add a vertical space (strut) between panels
+        recentChatMainPanel.add(Box.createVerticalStrut(10));
+
+        // Add the recentChatPanel to recentChatMainPanel
+        recentChatMainPanel.add(recentChatPanel);
+
+        // Refresh the recentChatMainPanel and scroll pane to reflect the new components
+        recentChatMainPanel.revalidate();
+        recentChatMainPanel.repaint();
+
+        System.out.println("Added recent chat panel for user: " + userName);
+    }
 
 }
