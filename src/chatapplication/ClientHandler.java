@@ -1,8 +1,10 @@
 package chatapplication;
+
 import java.io.*;
 import java.net.*;
 
 public class ClientHandler extends Thread {
+
     private final Socket clientSocket;
     private final String username;
 
@@ -14,40 +16,32 @@ public class ClientHandler extends Thread {
 
     @Override
     public void run() {
-        try (BufferedReader clientIn = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                PrintWriter clientOut = new PrintWriter(clientSocket.getOutputStream(), true)) {
+        try (BufferedReader clientIn = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); PrintWriter clientOut = new PrintWriter(clientSocket.getOutputStream(), true)) {
 
             while (true) {
                 String incomingMessage = clientIn.readLine();
 
                 if (incomingMessage != null) {
-
-
+                    String sender = XMLHandler.extractTag(incomingMessage, "from");
                     String receiver = XMLHandler.extractTag(incomingMessage, "to");
-                    String message = XMLHandler.extractTag(incomingMessage, "content");
+                    String content = XMLHandler.extractTag(incomingMessage, "content");
+                    String function = XMLHandler.extractTag(incomingMessage, "contentType");
 
-                    if(receiver.equals("server")){
-                        Socket receiverSocket = this.clientSocket;
-                        PrintWriter receiverOut = new PrintWriter(receiverSocket.getOutputStream(), true);
-
-                        receiverOut.println(Server.getClientsName());
-
-                    }
-                    if (receiver != null && message != null && Server.isReceiverValid(receiver)) {
-
-
-                        Socket receiverSocket = Server.getClientSocket(receiver);
-                        PrintWriter receiverOut = new PrintWriter(receiverSocket.getOutputStream(), true);
-
+                    if (receiver.equals("server")) {
+                        if (function.equals("contactsRetrieval")) {
+                            Socket receiverSocket = this.clientSocket;
+                            PrintWriter receiverOut = new PrintWriter(receiverSocket.getOutputStream(), true);
+                            receiverOut.println(Server.retrieveContacts(content));
+                        }
+                        else if(function.equals("retrieveChatHistory")){
+                            Socket receiverSocket = this.clientSocket;
+                            PrintWriter receiverOut = new PrintWriter(receiverSocket.getOutputStream(), true);
+                            receiverOut.println(Server.retrieveChatHistory(sender, content));
+                        }
+                    }else{
                         
-                        String xmlResponse = XMLHandler.createXML(username, receiver, message);
-                        receiverOut.println(xmlResponse);
-
-                    } else if (receiver == null || message == null) {
-                        clientOut.println(XMLHandler.createXML("server", username, "Error: Invalid XML format."));
-                    } else {
-                        // clientOut.println(XMLHandler.createXML("server", username, "User " + receiver + " not found."));
                     }
+
                 }
             }
         } catch (IOException e) {
@@ -56,6 +50,4 @@ public class ClientHandler extends Thread {
         }
     }
 
-    
 }
-

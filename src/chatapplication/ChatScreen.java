@@ -35,11 +35,11 @@ public class ChatScreen extends javax.swing.JFrame {
     /**
      * Creates new form ChatScreen
      */
-    public ChatScreen(String userName) {
+    public ChatScreen(String userName, String email) {
         ChatScreen.userName = userName;
+        ChatScreen.email = email;
         try {
             socket = new Socket("127.0.0.1", 8761);
-            userInput = new BufferedReader(new InputStreamReader(System.in));
             serverOut = new PrintWriter(socket.getOutputStream(), true);
             serverOut.println(userName);
 
@@ -59,7 +59,7 @@ public class ChatScreen extends javax.swing.JFrame {
     }
 
   private void initializeClients() {
-    serverOut.println(XMLHandler.createXML(userName, "server", ""));
+    serverOut.println(XMLHandler.createXML(userName, "server", "contactsRetrieval", email));
     Thread serverListenerThread = new Thread(new ServerListener(socket, chatPanel, recentChatMainPanel, recentChatScrollPane));
     serverListenerThread.start();
 }
@@ -376,7 +376,7 @@ public class ChatScreen extends javax.swing.JFrame {
     private void newChatTxtActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newChatTxtActionPerformed
         String newChatPerson = newChatTxt.getText();
         if (!newChatPerson.equals("")) {
-            serverOut.println(XMLHandler.createXML(userName, "server", newChatPerson));
+            serverOut.println(XMLHandler.createXML(userName, "server", "chatHistoryRetrieval", newChatPerson));
             Thread serverListenerThread = new Thread(new ServerListener(socket, chatPanel, recentChatMainPanel, recentChatScrollPane));
             serverListenerThread.start();
         }
@@ -404,7 +404,7 @@ public class ChatScreen extends javax.swing.JFrame {
             currentChatTxt.requestFocus();
 
             String toClient = currentChatLabel.getText();
-            serverOut.println(XMLHandler.createXML(userName, toClient, message));
+            serverOut.println(XMLHandler.createXML(userName, toClient, "sendMessage", email));
 
         }
     }//GEN-LAST:event_sendButtonMouseClicked
@@ -426,15 +426,15 @@ public class ChatScreen extends javax.swing.JFrame {
             currentChatTxt.setText("");
             currentChatTxt.requestFocus();
 
-            String toClient = currentChatLabel.getText();
-            serverOut.println(XMLHandler.createXML("mani", toClient, message));
+            String receiver = currentChatLabel.getText();
+            serverOut.println(XMLHandler.createXML(userName, receiver ,"sendMessage", message));
 
         }
     }//GEN-LAST:event_currentChatTxtActionPerformed
 
     private void recentChatLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_recentChatLabelMouseClicked
         handleUI(evt);
-
+        
     }//GEN-LAST:event_recentChatLabelMouseClicked
 
     private void homeButtonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_homeButtonMouseClicked
@@ -452,7 +452,6 @@ public class ChatScreen extends javax.swing.JFrame {
 
     public static void handleUI(java.awt.event.MouseEvent evt) {
         chatPanel.removeAll();
-
         chatPanel.revalidate();
         chatPanel.repaint();
         JLabel selectedLabel = (JLabel) evt.getComponent();
@@ -463,11 +462,15 @@ public class ChatScreen extends javax.swing.JFrame {
         currentChatLabel.setVisible(true);
         currentChatTxt.setVisible(true);
         sendButton.setVisible(true);
+        
+        String receiver = selectedLabel.getText();
+        serverOut.println(XMLHandler.createXML(userName, "server", "retrieveChatHistory", receiver));
     }
 
+
     private static Socket socket;
-    private static String userName;
-    private static BufferedReader userInput;
+    static String userName;
+    private static String email;
     private static PrintWriter serverOut;
     // Variables declaration - do not modify//GEN-BEGIN:variables
     public static javax.swing.JPanel chatPanel;
@@ -554,7 +557,14 @@ class ServerListener implements Runnable {
 
     private void displayChatMessage(String message) {
         String messageContent = XMLHandler.extractTag(message, "content");
-        String sender = XMLHandler.extractTag(message, "from");
+        String sender;
+        
+        if(ChatScreen.userName.equals(XMLHandler.extractTag(message, "from")))
+               sender = "You";
+        else
+            sender = XMLHandler.extractTag(message, "from");
+       
+        
 
         if (messageContent != null) {
             JLabel messageLabel = new JLabel("<html><b>" + sender + "</b><br>&nbsp;&nbsp;&nbsp;" + messageContent + "</html>");

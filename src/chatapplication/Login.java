@@ -296,12 +296,13 @@ public class Login extends javax.swing.JFrame {
 
             if (rs.next()) {
                 JOptionPane.showMessageDialog(this, "LOGGED IN", "SUCCESS", JOptionPane.INFORMATION_MESSAGE);
-                new ChatScreen(getUserName()).setVisible(true);
+                new ChatScreen(userName, email).setVisible(true);
                 this.dispose();
-
+                rs.close();
+                ps.close();
+                connection.close();
             } else {
                 JOptionPane.showMessageDialog(this, "Wrong Username/Password", "Error", JOptionPane.ERROR_MESSAGE);
-
             }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);

@@ -5,10 +5,11 @@ import java.util.regex.Pattern;
 public class XMLHandler {
 
 
-    public static String createXML(String from, String to, String content) {
+    public static String createXML(String from, String to,String contentType, String content) {
         return "<message>" +
                 "<from>" + from + "</from>" +
                 "<to>" + to + "</to>" +
+                "<contentType>" + contentType + "</contentType>" +
                 "<content>" + content + "</content>" +
                 "</message>";
     }
@@ -24,4 +25,5 @@ public class XMLHandler {
         
         return null;
     }
+    
 }
