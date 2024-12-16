@@ -58,11 +58,12 @@ public class ChatScreen extends javax.swing.JFrame {
         chatPanel.setLayout(new BoxLayout(chatPanel, BoxLayout.Y_AXIS));
     }
 
-  private void initializeClients() {
-    serverOut.println(XMLHandler.createXML(userName, "server", "contactsRetrieval", email));
-    Thread serverListenerThread = new Thread(new ServerListener(socket, chatPanel, recentChatMainPanel, recentChatScrollPane));
-    serverListenerThread.start();
-}
+    private void initializeClients() {
+        serverOut.println(XMLHandler.createXML(userName, "server", "contactsRetrieval", email));
+        Thread serverListenerThread = new Thread(new ServerListener(socket, chatPanel, recentChatMainPanel, recentChatScrollPane));
+        serverListenerThread.start();
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -403,8 +404,8 @@ public class ChatScreen extends javax.swing.JFrame {
             currentChatTxt.setText("");
             currentChatTxt.requestFocus();
 
-            String toClient = currentChatLabel.getText();
-            serverOut.println(XMLHandler.createXML(userName, toClient, "sendMessage", email));
+            String receiver = currentChatLabel.getText();
+            serverOut.println(XMLHandler.createXML(userName, receiver, "sendMessage", message));
 
         }
     }//GEN-LAST:event_sendButtonMouseClicked
@@ -427,14 +428,14 @@ public class ChatScreen extends javax.swing.JFrame {
             currentChatTxt.requestFocus();
 
             String receiver = currentChatLabel.getText();
-            serverOut.println(XMLHandler.createXML(userName, receiver ,"sendMessage", message));
+            serverOut.println(XMLHandler.createXML(userName, receiver, "sendMessage", message));
 
         }
     }//GEN-LAST:event_currentChatTxtActionPerformed
 
     private void recentChatLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_recentChatLabelMouseClicked
         handleUI(evt);
-        
+
     }//GEN-LAST:event_recentChatLabelMouseClicked
 
     private void homeButtonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_homeButtonMouseClicked
@@ -462,11 +463,10 @@ public class ChatScreen extends javax.swing.JFrame {
         currentChatLabel.setVisible(true);
         currentChatTxt.setVisible(true);
         sendButton.setVisible(true);
-        
+
         String receiver = selectedLabel.getText();
         serverOut.println(XMLHandler.createXML(userName, "server", "retrieveChatHistory", receiver));
     }
-
 
     private static Socket socket;
     static String userName;
@@ -525,11 +525,9 @@ class ServerListener implements Runnable {
                     System.out.println("Received user list: " + incomingMessage);
                     updateUserList(incomingMessage);
 
-                    for (Component cp : recentChatMainPanel.getComponents()) {
-                        System.out.println(cp);
-                    }
+                    
                 } else if (incomingMessage.startsWith("<message>")) {
-                    System.out.println("Received message: " + incomingMessage);
+                    
                     displayChatMessage(incomingMessage);
                 }
             }
@@ -556,15 +554,15 @@ class ServerListener implements Runnable {
     }
 
     private void displayChatMessage(String message) {
+//        System.out.println(message);
         String messageContent = XMLHandler.extractTag(message, "content");
         String sender;
-        
-        if(ChatScreen.userName.equals(XMLHandler.extractTag(message, "from")))
-               sender = "You";
-        else
+
+        if (ChatScreen.userName.equals(XMLHandler.extractTag(message, "from"))) {
+            sender = "You";
+        } else {
             sender = XMLHandler.extractTag(message, "from");
-       
-        
+        }
 
         if (messageContent != null) {
             JLabel messageLabel = new JLabel("<html><b>" + sender + "</b><br>&nbsp;&nbsp;&nbsp;" + messageContent + "</html>");

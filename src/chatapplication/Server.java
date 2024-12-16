@@ -12,6 +12,7 @@ import java.util.*;
 public class Server {
 
     private static HashMap<String, Socket> clientInfo = new HashMap<>();
+    private static HashMap<String, String> currentReceiver = new HashMap<>();
     private static Connection connection = MySQLConnect.getConnection();
 
     public static void main(String[] args) {
@@ -34,8 +35,12 @@ public class Server {
         }
     }
 
-    public static boolean isReceiverValid(String username) {
-        return clientInfo.containsKey(username);
+    public static String getReceiver(String sender) {
+        return currentReceiver.get(sender);
+    }
+    
+    public static boolean isReceiverOnline(String receiver){
+        return clientInfo.containsKey(receiver);
     }
 
     public static Socket getClientSocket(String username) {
@@ -132,37 +137,100 @@ public class Server {
                     + "WHERE (sender_id = ? AND receiver_id = ?) \n"
                     + "   OR (sender_id = ? AND receiver_id = ?)\n"
                     + "ORDER BY timestamp;";
-            
+
             ps = connection.prepareStatement(sql);
             ps.setInt(1, userId1);
             ps.setInt(2, userId2);
             ps.setInt(3, userId2);
             ps.setInt(4, userId1);
-            
+
             rs = ps.executeQuery();
-            
-            while(rs.next()){
-                if(rs.getInt(2) == userId1){
+
+            while (rs.next()) {
+                if (rs.getInt(2) == userId1) {
                     sender = user1;
                     receiver = user2;
-                }else{
+                } else {
                     sender = user2;
                     receiver = user1;
                 }
-                
+
                 content = rs.getString(4);
                 timeStamp = rs.getTimestamp(6);
                 status = rs.getString(5);
-                
+
                 message.append(XMLHandler.createXML(sender, receiver, "message", content)).append("\n");
             }
-            
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        System.out.println("Messages : " + message);
+       
         return message.toString();
 
+    }
+
+    public static void storeMessage(String sender, String receiver, String message, boolean status) {
+        System.out.println("I am called");
+        String sql = "SELECT id FROM users WHERE username = ?";
+        int senderId = 0, receiverId = 0;
+        boolean senderFound = false, receiverFound = false;
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setString(1, sender);
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                senderId = rs.getInt(1);
+                senderFound = true;
+            }
+
+            ps.setString(1, receiver);
+            rs = ps.executeQuery();
+
+            if (rs.next()) {
+                receiverId = rs.getInt(1);
+                receiverFound = true;
+            }
+            System.out.println(senderId + " " + receiverId);
+            
+            if (senderFound && receiverFound) {
+                sql = "INSERT INTO messages (sender_id, receiver_id, message, status)\n"
+                        + "VALUES (?, ?, ?, ?)";
+
+                ps = connection.prepareStatement(sql);
+                ps.setInt(1, senderId);
+                ps.setInt(2, receiverId);
+                ps.setString(3, message);
+                if (status) {
+                    ps.setString(4, "red");
+                } else {
+                    ps.setString(4, "sent");
+                }
+                
+                ps.execute();
+
+                sql = "INSERT INTO contacts (user1_id, user2_id, last_contacted)\n"
+                        + "VALUES (LEAST(?, ?), GREATEST(?, ?), NOW())\n"
+                        + "ON DUPLICATE KEY UPDATE\n"
+                        + "    last_contacted = NOW();";
+
+                ps = connection.prepareStatement(sql);
+                ps.setInt(1, senderId);
+                ps.setInt(2, receiverId);
+                ps.setInt(3, senderId);
+                ps.setInt(4, receiverId);
+                
+                ps.execute();
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void setActiveReceiver(String sender, String receiver) {
+        currentReceiver.put(sender, receiver);
     }
 
 }

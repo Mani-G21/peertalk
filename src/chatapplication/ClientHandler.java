@@ -32,14 +32,30 @@ public class ClientHandler extends Thread {
                             Socket receiverSocket = this.clientSocket;
                             PrintWriter receiverOut = new PrintWriter(receiverSocket.getOutputStream(), true);
                             receiverOut.println(Server.retrieveContacts(content));
-                        }
-                        else if(function.equals("retrieveChatHistory")){
+                        } else if (function.equals("retrieveChatHistory")) {
                             Socket receiverSocket = this.clientSocket;
                             PrintWriter receiverOut = new PrintWriter(receiverSocket.getOutputStream(), true);
+                            Server.setActiveReceiver(sender, content);
+                            System.out.println(sender + "is talking to " + content);
                             receiverOut.println(Server.retrieveChatHistory(sender, content));
                         }
-                    }else{
-                        
+                    } else {
+                        if (function.equals("sendMessage")) {
+                            String activeReceiver = Server.getReceiver(receiver);
+                            if (Server.isReceiverOnline(receiver)){
+                                if (receiver.equals(activeReceiver)) {
+                                    Socket receiverSocket = Server.getClientSocket(receiver);
+                                    PrintWriter receiverOut = new PrintWriter(receiverSocket.getOutputStream(), true);
+                                    receiverOut.println(XMLHandler.createXML(sender, receiver, "message", content));
+                                    Server.storeMessage(sender, receiver, content, true);
+                                } else {
+                                    Server.storeMessage(sender, receiver, content, false);
+                                }
+                            }else{
+                                Server.storeMessage(sender, receiver, content, false);
+                            }
+
+                        }
                     }
 
                 }
