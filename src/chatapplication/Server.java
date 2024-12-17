@@ -36,10 +36,11 @@ public class Server {
     }
 
     public static String getReceiver(String sender) {
+        System.out.println(currentReceiver);
         return currentReceiver.get(sender);
     }
-    
-    public static boolean isReceiverOnline(String receiver){
+
+    public static boolean isReceiverOnline(String receiver) {
         return clientInfo.containsKey(receiver);
     }
 
@@ -165,13 +166,12 @@ public class Server {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-       
+
         return message.toString();
 
     }
 
     public static void storeMessage(String sender, String receiver, String message, boolean status) {
-        System.out.println("I am called");
         String sql = "SELECT id FROM users WHERE username = ?";
         int senderId = 0, receiverId = 0;
         boolean senderFound = false, receiverFound = false;
@@ -192,8 +192,8 @@ public class Server {
                 receiverId = rs.getInt(1);
                 receiverFound = true;
             }
-            System.out.println(senderId + " " + receiverId);
-            
+           
+
             if (senderFound && receiverFound) {
                 sql = "INSERT INTO messages (sender_id, receiver_id, message, status)\n"
                         + "VALUES (?, ?, ?, ?)";
@@ -207,7 +207,7 @@ public class Server {
                 } else {
                     ps.setString(4, "sent");
                 }
-                
+
                 ps.execute();
 
                 sql = "INSERT INTO contacts (user1_id, user2_id, last_contacted)\n"
@@ -220,7 +220,7 @@ public class Server {
                 ps.setInt(2, receiverId);
                 ps.setInt(3, senderId);
                 ps.setInt(4, receiverId);
-                
+
                 ps.execute();
             }
 
@@ -230,7 +230,28 @@ public class Server {
     }
 
     public static void setActiveReceiver(String sender, String receiver) {
+        
         currentReceiver.put(sender, receiver);
+        System.out.println(currentReceiver);
     }
 
+    public static HashSet findUsers(String user) {
+        HashSet<String> users = new HashSet<>();
+        String sql = "SELECT * FROM users WHERE username = ?";
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setString(1, user);
+
+            ResultSet rs = ps.executeQuery();
+            
+            while(rs.next()){
+                users.add(rs.getString(2));
+            }
+
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+        System.out.println(users);
+        return users;
+    }
 }

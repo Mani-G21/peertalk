@@ -48,6 +48,7 @@ public class ChatScreen extends javax.swing.JFrame {
             System.out.println("Connection error: " + e.getMessage());
         }
         initComponents();
+        cancelToggleBtn.setVisible(false);
         initializeClients();
 
         currentChatBodyPanel.setVisible(false);
@@ -94,7 +95,8 @@ public class ChatScreen extends javax.swing.JFrame {
         newChatTxt = new javax.swing.JTextField();
         newChatSeparator = new javax.swing.JSeparator();
         jPanel8 = new javax.swing.JPanel();
-        jLabel2 = new javax.swing.JLabel();
+        chatsLabel = new javax.swing.JLabel();
+        cancelToggleBtn = new javax.swing.JLabel();
 
         jToggleButton1.setText("jToggleButton1");
 
@@ -307,24 +309,43 @@ public class ChatScreen extends javax.swing.JFrame {
 
         jPanel8.setBackground(new java.awt.Color(255, 255, 255));
 
-        jLabel2.setFont(new java.awt.Font("Segoe UI Historic", 1, 24)); // NOI18N
-        jLabel2.setText("Chats");
+        chatsLabel.setFont(new java.awt.Font("Segoe UI Historic", 1, 24)); // NOI18N
+        chatsLabel.setText("Chats");
+
+        cancelToggleBtn.setBackground(new java.awt.Color(51, 102, 255));
+        cancelToggleBtn.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
+        cancelToggleBtn.setForeground(new java.awt.Color(255, 255, 255));
+        cancelToggleBtn.setText("  Cancel");
+        cancelToggleBtn.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        cancelToggleBtn.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        cancelToggleBtn.setOpaque(true);
+        cancelToggleBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                cancelToggleBtnMouseClicked(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel8Layout = new javax.swing.GroupLayout(jPanel8);
         jPanel8.setLayout(jPanel8Layout);
         jPanel8Layout.setHorizontalGroup(
             jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel8Layout.createSequentialGroup()
-                .addGap(42, 42, 42)
-                .addComponent(jLabel2)
-                .addContainerGap(164, Short.MAX_VALUE))
+                .addGap(30, 30, 30)
+                .addComponent(chatsLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 105, Short.MAX_VALUE)
+                .addComponent(cancelToggleBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(20, 20, 20))
         );
         jPanel8Layout.setVerticalGroup(
             jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel8Layout.createSequentialGroup()
-                .addContainerGap(40, Short.MAX_VALUE)
-                .addComponent(jLabel2)
-                .addGap(30, 30, 30))
+                .addContainerGap(39, Short.MAX_VALUE)
+                .addComponent(chatsLabel)
+                .addGap(31, 31, 31))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel8Layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(cancelToggleBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -336,7 +357,7 @@ public class ChatScreen extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(recentChatScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 414, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                    .addGroup(jPanel1Layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jPanel8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -376,10 +397,11 @@ public class ChatScreen extends javax.swing.JFrame {
 
     private void newChatTxtActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newChatTxtActionPerformed
         String newChatPerson = newChatTxt.getText();
+        chatsLabel.setText("Found Users");
+        cancelToggleBtn.setVisible(true);
         if (!newChatPerson.equals("")) {
-            serverOut.println(XMLHandler.createXML(userName, "server", "chatHistoryRetrieval", newChatPerson));
-            Thread serverListenerThread = new Thread(new ServerListener(socket, chatPanel, recentChatMainPanel, recentChatScrollPane));
-            serverListenerThread.start();
+            serverOut.println(XMLHandler.createXML(userName, "server", "findUser", newChatPerson));
+            System.out.println("I am called");
         }
     }//GEN-LAST:event_newChatTxtActionPerformed
 
@@ -451,6 +473,14 @@ public class ChatScreen extends javax.swing.JFrame {
         chatPanel.repaint();
     }//GEN-LAST:event_homeButtonMouseClicked
 
+    private void cancelToggleBtnMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cancelToggleBtnMouseClicked
+       initializeClients();
+       newChatTxt.setText("");
+       homeButtonMouseClicked(evt);
+       chatsLabel.setText("Chats");
+       cancelToggleBtn.setVisible(false);
+    }//GEN-LAST:event_cancelToggleBtnMouseClicked
+
     public static void handleUI(java.awt.event.MouseEvent evt) {
         chatPanel.removeAll();
         chatPanel.revalidate();
@@ -473,14 +503,15 @@ public class ChatScreen extends javax.swing.JFrame {
     private static String email;
     private static PrintWriter serverOut;
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel cancelToggleBtn;
     public static javax.swing.JPanel chatPanel;
+    private javax.swing.JLabel chatsLabel;
     public static javax.swing.JScrollPane currentChatBodyPanel;
     public static javax.swing.JPanel currentChatHeader;
     public static javax.swing.JLabel currentChatLabel;
     public static javax.swing.JTextField currentChatTxt;
     private javax.swing.JLabel homeButton;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel4;
@@ -554,7 +585,7 @@ class ServerListener implements Runnable {
     }
 
     private void displayChatMessage(String message) {
-//        System.out.println(message);
+        System.out.println(message);
         String messageContent = XMLHandler.extractTag(message, "content");
         String sender;
 
