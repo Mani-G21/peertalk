@@ -13,6 +13,7 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -38,6 +39,7 @@ public class ChatScreen extends javax.swing.JFrame {
     public ChatScreen(String userName, String email) {
         ChatScreen.userName = userName;
         ChatScreen.email = email;
+        ChatScreen.contactList = new HashSet<>();
         try {
             socket = new Socket("127.0.0.1", 8761);
             serverOut = new PrintWriter(socket.getOutputStream(), true);
@@ -474,11 +476,11 @@ public class ChatScreen extends javax.swing.JFrame {
     }//GEN-LAST:event_homeButtonMouseClicked
 
     private void cancelToggleBtnMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cancelToggleBtnMouseClicked
-       initializeClients();
-       newChatTxt.setText("");
-       homeButtonMouseClicked(evt);
-       chatsLabel.setText("Chats");
-       cancelToggleBtn.setVisible(false);
+        initializeClients();
+        newChatTxt.setText("");
+        homeButtonMouseClicked(evt);
+        chatsLabel.setText("Chats");
+        cancelToggleBtn.setVisible(false);
     }//GEN-LAST:event_cancelToggleBtnMouseClicked
 
     public static void handleUI(java.awt.event.MouseEvent evt) {
@@ -502,6 +504,7 @@ public class ChatScreen extends javax.swing.JFrame {
     static String userName;
     private static String email;
     private static PrintWriter serverOut;
+    static HashSet<String> contactList;
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel cancelToggleBtn;
     public static javax.swing.JPanel chatPanel;
@@ -556,9 +559,8 @@ class ServerListener implements Runnable {
                     System.out.println("Received user list: " + incomingMessage);
                     updateUserList(incomingMessage);
 
-                    
                 } else if (incomingMessage.startsWith("<message>")) {
-                    
+
                     displayChatMessage(incomingMessage);
                 }
             }
@@ -576,6 +578,7 @@ class ServerListener implements Runnable {
         while (userMatcher.find()) {
             String userName = userMatcher.group(1);
             System.out.println("Adding user to recent chats: " + userName);
+            ChatScreen.contactList.add(userName);
             addRecentChat(userName, "/chatapplication/chatLogoPerson.jpg");
 
         }
@@ -585,7 +588,6 @@ class ServerListener implements Runnable {
     }
 
     private void displayChatMessage(String message) {
-        System.out.println(message);
         String messageContent = XMLHandler.extractTag(message, "content");
         String sender;
 
@@ -595,19 +597,28 @@ class ServerListener implements Runnable {
             sender = XMLHandler.extractTag(message, "from");
         }
 
-        if (messageContent != null) {
-            JLabel messageLabel = new JLabel("<html><b>" + sender + "</b><br>&nbsp;&nbsp;&nbsp;" + messageContent + "</html>");
-            messageLabel.setOpaque(true);
-            messageLabel.setForeground(Color.BLACK);
-            messageLabel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-            messageLabel.setFont(new Font("Times New Roman", Font.PLAIN, 24));
-
-            chatPanel.add(messageLabel);
-            chatPanel.revalidate();
-            chatPanel.repaint();
-        } else {
-            System.out.println("Error: Could not parse message content.");
+        if (!sender.equalsIgnoreCase("You") && ChatScreen.contactList.add(sender)) {
+            addRecentChat(sender, "/chatapplication/chatLogoPerson.jpg");
         }
+
+       
+        if (ChatScreen.currentChatLabel.getText().equals(sender) || sender.equalsIgnoreCase("You")) {
+            if (messageContent != null) {
+                JLabel messageLabel = new JLabel("<html><b>" + sender + "</b><br>&nbsp;&nbsp;&nbsp;" + messageContent + "</html>");
+                messageLabel.setOpaque(true);
+                messageLabel.setForeground(Color.BLACK);
+                messageLabel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+                messageLabel.setFont(new Font("Times New Roman", Font.PLAIN, 24));
+
+               
+                chatPanel.add(messageLabel);
+                chatPanel.revalidate();
+                chatPanel.repaint();
+            } else {
+                System.out.println("Error: Could not parse message content.");
+            }
+        }
+
     }
 
     private void addRecentChat(String userName, String iconPath) {
