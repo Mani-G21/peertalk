@@ -254,7 +254,9 @@
                           <Component id="currentChatHeader" alignment="0" max="32767" attributes="0"/>
                           <Component id="currentChatBodyPanel" alignment="0" pref="0" max="32767" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
-                              <Component id="currentChatTxt" min="-2" pref="924" max="-2" attributes="0"/>
+                              <Component id="currentChatTxt" min="-2" pref="858" max="-2" attributes="0"/>
+                              <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
+                              <Component id="fileSelectButton" min="-2" pref="80" max="-2" attributes="0"/>
                               <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
                               <Component id="sendButton" min="-2" max="-2" attributes="0"/>
                           </Group>
@@ -270,8 +272,9 @@
                       <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
                       <Component id="currentChatBodyPanel" max="32767" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="currentChatTxt" min="-2" pref="59" max="-2" attributes="0"/>
+                          <Component id="currentChatTxt" pref="59" max="32767" attributes="0"/>
                           <Component id="sendButton" max="32767" attributes="0"/>
+                          <Component id="fileSelectButton" alignment="0" max="32767" attributes="0"/>
                       </Group>
                   </Group>
               </Group>
@@ -380,6 +383,21 @@
               </Events>
               <AuxValues>
                 <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="9"/>
+              </AuxValues>
+            </Component>
+            <Component class="javax.swing.JButton" name="fileSelectButton">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/chatapplication/fileFolder.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="jButton1"/>
+                <Property name="horizontalTextPosition" type="int" value="0"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="fileSelectButtonActionPerformed"/>
+              </Events>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="10"/>
               </AuxValues>
             </Component>
           </SubComponents>

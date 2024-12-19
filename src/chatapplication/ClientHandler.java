@@ -16,7 +16,8 @@ public class ClientHandler extends Thread {
 
     @Override
     public void run() {
-        try (BufferedReader clientIn = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); PrintWriter clientOut = new PrintWriter(clientSocket.getOutputStream(), true)) {
+        try (BufferedReader clientIn = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); 
+                PrintWriter clientOut = new PrintWriter(clientSocket.getOutputStream(), true)) {
 
             while (true) {
                 String incomingMessage = clientIn.readLine();

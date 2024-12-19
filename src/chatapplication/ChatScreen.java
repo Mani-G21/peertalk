@@ -12,6 +12,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.FileDialog;
 import java.awt.Font;
 import java.util.HashSet;
 import java.util.Set;
@@ -22,6 +23,7 @@ import java.util.regex.Pattern;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -58,6 +60,7 @@ public class ChatScreen extends javax.swing.JFrame {
         currentChatLabel.setVisible(false);
         currentChatTxt.setVisible(false);
         sendButton.setVisible(false);
+        fileSelectButton.setVisible(false);
         chatPanel.setLayout(new BoxLayout(chatPanel, BoxLayout.Y_AXIS));
     }
 
@@ -92,6 +95,7 @@ public class ChatScreen extends javax.swing.JFrame {
         chatPanel = new javax.swing.JPanel();
         currentChatTxt = new javax.swing.JTextField();
         sendButton = new javax.swing.JButton();
+        fileSelectButton = new javax.swing.JButton();
         jPanel6 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         newChatTxt = new javax.swing.JTextField();
@@ -246,6 +250,15 @@ public class ChatScreen extends javax.swing.JFrame {
             }
         });
 
+        fileSelectButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/chatapplication/fileFolder.png"))); // NOI18N
+        fileSelectButton.setText("jButton1");
+        fileSelectButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        fileSelectButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                fileSelectButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
@@ -255,7 +268,9 @@ public class ChatScreen extends javax.swing.JFrame {
                     .addComponent(currentChatHeader, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(currentChatBodyPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel4Layout.createSequentialGroup()
-                        .addComponent(currentChatTxt, javax.swing.GroupLayout.PREFERRED_SIZE, 924, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(currentChatTxt, javax.swing.GroupLayout.PREFERRED_SIZE, 858, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, 0)
+                        .addComponent(fileSelectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, 0)
                         .addComponent(sendButton)))
                 .addGap(0, 0, Short.MAX_VALUE))
@@ -267,8 +282,9 @@ public class ChatScreen extends javax.swing.JFrame {
                 .addGap(0, 0, 0)
                 .addComponent(currentChatBodyPanel)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(currentChatTxt, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(sendButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(currentChatTxt, javax.swing.GroupLayout.DEFAULT_SIZE, 59, Short.MAX_VALUE)
+                    .addComponent(sendButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(fileSelectButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
 
         jPanel6.setBackground(new java.awt.Color(255, 255, 255));
@@ -469,6 +485,7 @@ public class ChatScreen extends javax.swing.JFrame {
         currentChatTxt.setVisible(false);
         sendButton.setVisible(false);
         chatPanel.setVisible(false);
+        fileSelectButton.setVisible(false);
         chatPanel.removeAll();
 
         chatPanel.revalidate();
@@ -483,6 +500,15 @@ public class ChatScreen extends javax.swing.JFrame {
         cancelToggleBtn.setVisible(false);
     }//GEN-LAST:event_cancelToggleBtnMouseClicked
 
+    private void fileSelectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileSelectButtonActionPerformed
+        FileDialog fd = new FileDialog(this, "Select a file", FileDialog.LOAD);
+        fd.setVisible(true);
+        if (fd.getDirectory() != null || fd.getFile() != null) {
+
+            sendFile(fd.getDirectory() + fd.getFile());
+        }
+    }//GEN-LAST:event_fileSelectButtonActionPerformed
+
     public static void handleUI(java.awt.event.MouseEvent evt) {
         chatPanel.removeAll();
         chatPanel.revalidate();
@@ -495,11 +521,39 @@ public class ChatScreen extends javax.swing.JFrame {
         currentChatLabel.setVisible(true);
         currentChatTxt.setVisible(true);
         sendButton.setVisible(true);
+        fileSelectButton.setVisible(true);
 
         String receiver = selectedLabel.getText();
         serverOut.println(XMLHandler.createXML(userName, "server", "retrieveChatHistory", receiver));
     }
 
+    private static boolean sendFile(String filePath) {
+        File file = new File(filePath);
+        
+        int bufferSize = (int) Math.min(file.length(), 64 * 1024);
+        byte[] buffer = new byte[bufferSize];
+
+        try (
+                FileInputStream fis = new FileInputStream(file);
+                DataOutputStream dos = new DataOutputStream(socket.getOutputStream())) {
+
+            dos.writeLong(file.length());
+
+            int bytesRead;
+            
+
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                dos.write(buffer, 0, bytesRead);
+                
+
+            }
+
+            System.out.println("\nFile transfer complete!");
+        } catch (IOException e) {
+        }
+
+        return true;
+    }
     private static Socket socket;
     static String userName;
     private static String email;
@@ -513,6 +567,7 @@ public class ChatScreen extends javax.swing.JFrame {
     public static javax.swing.JPanel currentChatHeader;
     public static javax.swing.JLabel currentChatLabel;
     public static javax.swing.JTextField currentChatTxt;
+    private static javax.swing.JButton fileSelectButton;
     private javax.swing.JLabel homeButton;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
@@ -601,7 +656,6 @@ class ServerListener implements Runnable {
             addRecentChat(sender, "/chatapplication/chatLogoPerson.jpg");
         }
 
-       
         if (ChatScreen.currentChatLabel.getText().equals(sender) || sender.equalsIgnoreCase("You")) {
             if (messageContent != null) {
                 JLabel messageLabel = new JLabel("<html><b>" + sender + "</b><br>&nbsp;&nbsp;&nbsp;" + messageContent + "</html>");
@@ -610,7 +664,6 @@ class ServerListener implements Runnable {
                 messageLabel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
                 messageLabel.setFont(new Font("Times New Roman", Font.PLAIN, 24));
 
-               
                 chatPanel.add(messageLabel);
                 chatPanel.revalidate();
                 chatPanel.repaint();
