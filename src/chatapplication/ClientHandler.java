@@ -104,10 +104,6 @@ public class ClientHandler extends Thread {
             }
             System.out.println("sent " + totalBytesSent + "bytes");
             
-            dos.close();
-            fos.close();
-            receiverOut.close();
-            rdos.close();
             
             
         } catch (Exception e) {

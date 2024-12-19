@@ -508,11 +508,7 @@ public class ChatScreen extends javax.swing.JFrame {
             sendFile(fd.getDirectory() + fd.getFile(), fd.getFile(), userName, currentChatLabel.getText());
         }
 
-        try {
-            socket = new Socket("127.0.0.1", 8761);
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
+       
     }//GEN-LAST:event_fileSelectButtonActionPerformed
 
     public static void handleUI(java.awt.event.MouseEvent evt) {
@@ -611,6 +607,7 @@ class ServerListener implements Runnable {
     @Override
     public void run() {
         try (BufferedReader serverIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));) {
+            DataInputStream dos = new DataInputStream(socket.getInputStream());
             String incomingMessage;
 
             while ((incomingMessage = serverIn.readLine()) != null) {
@@ -625,7 +622,7 @@ class ServerListener implements Runnable {
                     displayChatMessage(incomingMessage);
                 } else if (incomingMessage.startsWith("<file>")) {
                     // Handle file reception
-                    receiveFile(incomingMessage);
+                    receiveFile(incomingMessage, dos);
                 }
             }
         } catch (IOException e) {
@@ -730,12 +727,12 @@ class ServerListener implements Runnable {
         System.out.println("Added recent chat panel for user: " + userName);
     }
 
-    private void receiveFile(String incomingMessage) {
+    private void receiveFile(String incomingMessage, DataInputStream dos) {
         String fileName = XMLHandler.extractTag(incomingMessage, "name");
         System.out.println(fileName);
         int bytes = 0;
         try {
-            DataInputStream dos = new DataInputStream(socket.getInputStream());
+
             File f = new File("received_" + fileName);
 
             if (!f.exists()) {
@@ -756,8 +753,6 @@ class ServerListener implements Runnable {
             }
             System.out.println("Received " + totalBytes + "bytes");
 
-            dos.close();
-            fos.close();
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
