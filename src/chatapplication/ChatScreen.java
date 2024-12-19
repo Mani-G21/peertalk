@@ -505,7 +505,13 @@ public class ChatScreen extends javax.swing.JFrame {
         fd.setVisible(true);
         if (fd.getDirectory() != null || fd.getFile() != null) {
 
-            sendFile(fd.getDirectory() + fd.getFile());
+            sendFile(fd.getDirectory() + fd.getFile(), fd.getFile(), userName, currentChatLabel.getText());
+        }
+
+        try {
+            socket = new Socket("127.0.0.1", 8761);
+        } catch (IOException ex) {
+            ex.printStackTrace();
         }
     }//GEN-LAST:event_fileSelectButtonActionPerformed
 
@@ -527,33 +533,33 @@ public class ChatScreen extends javax.swing.JFrame {
         serverOut.println(XMLHandler.createXML(userName, "server", "retrieveChatHistory", receiver));
     }
 
-    private static boolean sendFile(String filePath) {
+    private static boolean sendFile(String filePath, String fileName, String sender, String receiver) {
         File file = new File(filePath);
-        
+
         int bufferSize = (int) Math.min(file.length(), 64 * 1024);
         byte[] buffer = new byte[bufferSize];
+        serverOut.println(XMLHandler.createXML(userName, currentChatLabel.getText(), "sendFile", fileName));
 
-        try (
-                FileInputStream fis = new FileInputStream(file);
-                DataOutputStream dos = new DataOutputStream(socket.getOutputStream())) {
-
+        try {
+            FileInputStream fis = new FileInputStream(file);
+            DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
             dos.writeLong(file.length());
 
             int bytesRead;
-            
-
+            int totalBytes = 0;
             while ((bytesRead = fis.read(buffer)) != -1) {
                 dos.write(buffer, 0, bytesRead);
-                
-
+                totalBytes += bytesRead;
             }
-
+            System.out.println("sent " + totalBytes + "bytes");
             System.out.println("\nFile transfer complete!");
         } catch (IOException e) {
+            System.out.println(e.getMessage());
         }
 
         return true;
     }
+
     private static Socket socket;
     static String userName;
     private static String email;
@@ -604,7 +610,7 @@ class ServerListener implements Runnable {
 
     @Override
     public void run() {
-        try (BufferedReader serverIn = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+        try (BufferedReader serverIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));) {
             String incomingMessage;
 
             while ((incomingMessage = serverIn.readLine()) != null) {
@@ -617,6 +623,9 @@ class ServerListener implements Runnable {
                 } else if (incomingMessage.startsWith("<message>")) {
 
                     displayChatMessage(incomingMessage);
+                } else if (incomingMessage.startsWith("<file>")) {
+                    // Handle file reception
+                    receiveFile(incomingMessage);
                 }
             }
         } catch (IOException e) {
@@ -719,6 +728,40 @@ class ServerListener implements Runnable {
         recentChatMainPanel.repaint();
 
         System.out.println("Added recent chat panel for user: " + userName);
+    }
+
+    private void receiveFile(String incomingMessage) {
+        String fileName = XMLHandler.extractTag(incomingMessage, "name");
+        System.out.println(fileName);
+        int bytes = 0;
+        try {
+            DataInputStream dos = new DataInputStream(socket.getInputStream());
+            File f = new File("received_" + fileName);
+
+            if (!f.exists()) {
+                f.createNewFile();
+            }
+
+            FileOutputStream fos = new FileOutputStream(f);
+
+            long size = dos.readLong();
+            long totalBytes = 0;
+            byte b[] = new byte[(int) Math.min(size, 64 * 1024)];
+
+            while (size > 0
+                    && ((bytes = dos.read(b, 0, (int) Math.min(size, b.length))) != -1)) {
+                fos.write(b, 0, bytes);
+                size -= bytes;
+                totalBytes += bytes;
+            }
+            System.out.println("Received " + totalBytes + "bytes");
+
+            dos.close();
+            fos.close();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
     }
 
 }
