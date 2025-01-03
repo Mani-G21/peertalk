@@ -87,13 +87,16 @@ public class ClientHandler extends Thread {
                 size -= bytes;
                 totalBytes += bytes;
             }
+            
+            
             System.out.println("Received " + totalBytes + "bytes");
 
             Socket receiverSocket = Server.getClientSocket(receiver);
             PrintWriter receiverOut = new PrintWriter(receiverSocket.getOutputStream(), true);
             receiverOut.println("<file><name>" + fileName + "</name></file>");
             DataOutputStream rdos = new DataOutputStream(receiverSocket.getOutputStream());
-
+            
+            rdos.writeLong(totalBytes);
             bytes = 0;
             long totalBytesSent = 0;
             FileInputStream fis = new FileInputStream(f);

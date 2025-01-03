@@ -20,12 +20,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javafx.scene.control.ProgressBar;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 
@@ -282,7 +284,7 @@ public class ChatScreen extends javax.swing.JFrame {
                 .addGap(0, 0, 0)
                 .addComponent(currentChatBodyPanel)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(currentChatTxt, javax.swing.GroupLayout.DEFAULT_SIZE, 59, Short.MAX_VALUE)
+                    .addComponent(currentChatTxt)
                     .addComponent(sendButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(fileSelectButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
@@ -607,7 +609,7 @@ class ServerListener implements Runnable {
     @Override
     public void run() {
         try (BufferedReader serverIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));) {
-            DataInputStream dos = new DataInputStream(socket.getInputStream());
+            DataInputStream dis = new DataInputStream(socket.getInputStream());
             String incomingMessage;
 
             while ((incomingMessage = serverIn.readLine()) != null) {
@@ -621,8 +623,8 @@ class ServerListener implements Runnable {
 
                     displayChatMessage(incomingMessage);
                 } else if (incomingMessage.startsWith("<file>")) {
-                    // Handle file reception
-                    receiveFile(incomingMessage, dos);
+                
+                    receiveFile(incomingMessage, dis);
                 }
             }
         } catch (IOException e) {
@@ -727,7 +729,7 @@ class ServerListener implements Runnable {
         System.out.println("Added recent chat panel for user: " + userName);
     }
 
-    private void receiveFile(String incomingMessage, DataInputStream dos) {
+    private void receiveFile(String incomingMessage, DataInputStream dis) {
         String fileName = XMLHandler.extractTag(incomingMessage, "name");
         System.out.println(fileName);
         int bytes = 0;
@@ -741,15 +743,19 @@ class ServerListener implements Runnable {
 
             FileOutputStream fos = new FileOutputStream(f);
 
-            long size = dos.readLong();
+            long size = dis.readLong();
+            System.out.println(size);
             long totalBytes = 0;
             byte b[] = new byte[(int) Math.min(size, 64 * 1024)];
-
+            
+            
             while (size > 0
-                    && ((bytes = dos.read(b, 0, (int) Math.min(size, b.length))) != -1)) {
+                    && ((bytes = dis.read(b, 0, (int) Math.min(size, b.length))) != -1)) {
                 fos.write(b, 0, bytes);
                 size -= bytes;
                 totalBytes += bytes;
+                System.out.println(size);
+               
             }
             System.out.println("Received " + totalBytes + "bytes");
 
