@@ -317,6 +317,7 @@ public class Signup extends javax.swing.JFrame {
         String userName = getUserName();
         String email = getEmail();
         String password = getPassword();
+        System.out.println(password);
         boolean validUsername, validEmail, validPassword;
 
         if (!(userName.length() == 0 || email.length() == 0 || password.length() == 0)) {
@@ -418,7 +419,8 @@ public class Signup extends javax.swing.JFrame {
     }
 
     private String getPassword() {
-        return Arrays.toString(passwordTxtF.getPassword());
+//        return Arrays.toString(passwordTxtF.getPassword());
+        return new String(passwordTxtF.getPassword());
     }
 
     /**

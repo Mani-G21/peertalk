@@ -51,7 +51,7 @@ public class ChatScreen extends javax.swing.JFrame {
 
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println("Connection error: " + e.getMessage());
+
         }
         initComponents();
         cancelToggleBtn.setVisible(false);
@@ -421,7 +421,7 @@ public class ChatScreen extends javax.swing.JFrame {
         cancelToggleBtn.setVisible(true);
         if (!newChatPerson.equals("")) {
             serverOut.println(XMLHandler.createXML(userName, "server", "findUser", newChatPerson));
-            System.out.println("I am called");
+
         }
     }//GEN-LAST:event_newChatTxtActionPerformed
 
@@ -510,7 +510,7 @@ public class ChatScreen extends javax.swing.JFrame {
             sendFile(fd.getDirectory() + fd.getFile(), fd.getFile(), userName, currentChatLabel.getText());
         }
 
-       
+
     }//GEN-LAST:event_fileSelectButtonActionPerformed
 
     public static void handleUI(java.awt.event.MouseEvent evt) {
@@ -549,13 +549,18 @@ public class ChatScreen extends javax.swing.JFrame {
                 dos.write(buffer, 0, bytesRead);
                 totalBytes += bytesRead;
             }
-            System.out.println("sent " + totalBytes + "bytes");
-            System.out.println("\nFile transfer complete!");
+
+            fis.close();
+
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+
         }
 
         return true;
+    }
+
+    public static void sendReceiveFileCommand(String fileName) {
+        serverOut.println(XMLHandler.createXML(userName, "server", "receiveFile", fileName));
     }
 
     private static Socket socket;
@@ -610,25 +615,28 @@ class ServerListener implements Runnable {
     public void run() {
         try (BufferedReader serverIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));) {
             DataInputStream dis = new DataInputStream(socket.getInputStream());
+
             String incomingMessage;
 
             while ((incomingMessage = serverIn.readLine()) != null) {
 
                 if (incomingMessage.startsWith("[")) {
                     recentChatMainPanel.removeAll();
-                    System.out.println("Received user list: " + incomingMessage);
+
                     updateUserList(incomingMessage);
 
                 } else if (incomingMessage.startsWith("<message>")) {
 
                     displayChatMessage(incomingMessage);
                 } else if (incomingMessage.startsWith("<file>")) {
-                
-                    receiveFile(incomingMessage, dis);
-                }
+
+                    receiveFile(incomingMessage);
+                } else if(incomingMessage.startsWith("<fileData>")){
+                        downloadFile(incomingMessage, dis);
+                 }
             }
         } catch (IOException e) {
-            System.out.println("Lost connection to server.");
+
         }
     }
 
@@ -640,7 +648,7 @@ class ServerListener implements Runnable {
 
         while (userMatcher.find()) {
             String userName = userMatcher.group(1);
-            System.out.println("Adding user to recent chats: " + userName);
+
             ChatScreen.contactList.add(userName);
             addRecentChat(userName, "/chatapplication/chatLogoPerson.jpg");
 
@@ -676,26 +684,23 @@ class ServerListener implements Runnable {
                 chatPanel.revalidate();
                 chatPanel.repaint();
             } else {
-                System.out.println("Error: Could not parse message content.");
+
             }
         }
 
     }
 
     private void addRecentChat(String userName, String iconPath) {
-        // Set BoxLayout on recentChatMainPanel for vertical stacking
         if (!(recentChatMainPanel.getLayout() instanceof BoxLayout)) {
             recentChatMainPanel.setLayout(new BoxLayout(recentChatMainPanel, BoxLayout.Y_AXIS));
         }
 
-        // Create a new panel for the recent chat
         JPanel recentChatPanel = new JPanel();
         recentChatPanel.setBackground(new java.awt.Color(255, 255, 255));
         recentChatPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(204, 204, 204)));
         recentChatPanel.setMaximumSize(new Dimension(397, 100)); // Set consistent size for the panel
         recentChatPanel.setLayout(new BorderLayout()); // Use BorderLayout to make the label fill the entire panel
 
-        // Create and configure the label
         JLabel recentChatLabel = new JLabel();
         recentChatLabel.setFont(new java.awt.Font("Segoe UI", 0, 24)); // Set font
         recentChatLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -706,32 +711,32 @@ class ServerListener implements Runnable {
             recentChatLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource(iconPath)));
         }
 
-        // Add mouse listener to handle click events on the label
         recentChatLabel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 ChatScreen.handleUI(evt);
             }
         });
 
-        // Add the label to the center of recentChatPanel to make it fill the entire panel
         recentChatPanel.add(recentChatLabel, BorderLayout.CENTER);
 
-        // Add a vertical space (strut) between panels
         recentChatMainPanel.add(Box.createVerticalStrut(10));
 
-        // Add the recentChatPanel to recentChatMainPanel
         recentChatMainPanel.add(recentChatPanel);
 
-        // Refresh the recentChatMainPanel and scroll pane to reflect the new components
         recentChatMainPanel.revalidate();
         recentChatMainPanel.repaint();
 
-        System.out.println("Added recent chat panel for user: " + userName);
     }
 
-    private void receiveFile(String incomingMessage, DataInputStream dis) {
+    private void receiveFile(String incomingMessage) {
         String fileName = XMLHandler.extractTag(incomingMessage, "name");
-        System.out.println(fileName);
+        String size = XMLHandler.extractTag(incomingMessage, "size");
+        displayFile(fileName, size);
+
+    }
+
+    private void downloadFile(String incomingMessage, DataInputStream dis) {
+        String fileName = XMLHandler.extractTag(incomingMessage, "name");
         int bytes = 0;
         try {
 
@@ -744,25 +749,31 @@ class ServerListener implements Runnable {
             FileOutputStream fos = new FileOutputStream(f);
 
             long size = dis.readLong();
-            System.out.println(size);
+            System.out.println("Receieved file size : " + size);
             long totalBytes = 0;
             byte b[] = new byte[(int) Math.min(size, 64 * 1024)];
-            
-            
+
             while (size > 0
                     && ((bytes = dis.read(b, 0, (int) Math.min(size, b.length))) != -1)) {
                 fos.write(b, 0, bytes);
                 size -= bytes;
                 totalBytes += bytes;
-                System.out.println(size);
-               
+
             }
-            System.out.println("Received " + totalBytes + "bytes");
 
+//            displayFile();
+            fos.close();
+           
         } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
 
+        }
+    }
+
+    private void displayFile(String fileName, String size) {
+        JPanel filePanel = new FilePanel(fileName, size);
+        chatPanel.add(filePanel);
+        chatPanel.revalidate();
+        chatPanel.repaint();
     }
 
 }

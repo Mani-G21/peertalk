@@ -42,6 +42,8 @@ public class ClientHandler extends Thread {
                             Socket receiverSocket = this.clientSocket;
                             PrintWriter receiverOut = new PrintWriter(receiverSocket.getOutputStream(), true);
                             receiverOut.println(Server.findUsers(content));
+                        } else if (function.equals("receiveFile")) {
+                            sendFile(receiver, content);
                         }
                     } else {
                         if (function.equals("sendMessage")) {
@@ -55,7 +57,7 @@ public class ClientHandler extends Thread {
                                 Server.storeMessage(sender, receiver, content, false);
                             }
                         } else if (function.equals("sendFile")) {
-                            handleFileTransfer(sender, receiver, content);
+                            receiveFile(sender, receiver, content);
                         }
                     }
 
@@ -65,10 +67,9 @@ public class ClientHandler extends Thread {
             System.out.println("Connection with client " + username + " lost.");
             Server.removeUser(username);
         }
-
     }
 
-    private void handleFileTransfer(String sender, String receiver, String fileName) {
+    private void receiveFile(String sender, String receiver, String fileName) {
         try {
             int bytes = 0;
 
@@ -87,28 +88,46 @@ public class ClientHandler extends Thread {
                 size -= bytes;
                 totalBytes += bytes;
             }
-            
-            
+
             System.out.println("Received " + totalBytes + "bytes");
 
             Socket receiverSocket = Server.getClientSocket(receiver);
             PrintWriter receiverOut = new PrintWriter(receiverSocket.getOutputStream(), true);
-            receiverOut.println("<file><name>" + fileName + "</name></file>");
-            DataOutputStream rdos = new DataOutputStream(receiverSocket.getOutputStream());
-            
-            rdos.writeLong(totalBytes);
-            bytes = 0;
-            long totalBytesSent = 0;
-            FileInputStream fis = new FileInputStream(f);
-            while ((bytes = fis.read(b)) != -1) {
-                rdos.write(b, 0, bytes);
-                totalBytesSent += bytes;
+            receiverOut.println("<file><name>" + fileName + "</name><size>" + totalBytes + "</size></file>");
 
+            fos.close();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void sendFile(String receiver, String fileName) {
+        try {
+
+            File f = new File(fileName);
+            PrintWriter receiverOut = new PrintWriter(this.clientSocket.getOutputStream(), true);
+            receiverOut.println("<fileData><name>" + fileName + "</name></fileData>");
+
+            // Send file to the receiver
+            DataOutputStream rdos = new DataOutputStream(this.clientSocket.getOutputStream());
+            long size = f.length();
+            rdos.writeLong(size);
+
+            FileInputStream fis = new FileInputStream(f);
+
+            byte[] buffer = new byte[64 * 1024];
+            int bytesRead;
+
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                rdos.write(buffer, 0, bytesRead);
             }
-            System.out.println("sent " + totalBytesSent + "bytes");
+
+            fis.close();
+            rdos.flush(); // Ensure all data is sent
             
-            
-            
+            System.out.println("File sent to receiver.");
+
         } catch (Exception e) {
             System.out.println(e.getMessage());
             e.printStackTrace();
