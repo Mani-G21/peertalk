@@ -32,7 +32,7 @@ public class ClientHandler extends Thread {
                         if (function.equals("contactsRetrieval")) {
                             Socket receiverSocket = this.clientSocket;
                             PrintWriter receiverOut = new PrintWriter(receiverSocket.getOutputStream(), true);
-                            receiverOut.println(Server.retrieveContacts(content));
+                            receiverOut.println(Server.retrieveContacts(sender));
                         } else if (function.equals("retrieveChatHistory")) {
                             Socket receiverSocket = this.clientSocket;
                             PrintWriter receiverOut = new PrintWriter(receiverSocket.getOutputStream(), true);
@@ -51,10 +51,10 @@ public class ClientHandler extends Thread {
                                 Socket receiverSocket = Server.getClientSocket(receiver);
                                 PrintWriter receiverOut = new PrintWriter(receiverSocket.getOutputStream(), true);
                                 receiverOut.println(XMLHandler.createXML(sender, receiver, "message", content));
-                                Server.storeMessage(sender, receiver, content, true);
+                                Server.storeMessage(sender, receiver, content, true, "text");
 
                             } else {
-                                Server.storeMessage(sender, receiver, content, false);
+                                Server.storeMessage(sender, receiver, content, false, "text");
                             }
                         } else if (function.equals("sendFile")) {
                             receiveFile(sender, receiver, content);
@@ -92,10 +92,16 @@ public class ClientHandler extends Thread {
             System.out.println("Received " + totalBytes + "bytes");
 
             Socket receiverSocket = Server.getClientSocket(receiver);
-            PrintWriter receiverOut = new PrintWriter(receiverSocket.getOutputStream(), true);
-            receiverOut.println("<file><name>" + fileName + "</name><size>" + totalBytes + "</size></file>");
-
-            fos.close();
+            try{
+                PrintWriter receiverOut = new PrintWriter(receiverSocket.getOutputStream(), true);
+                receiverOut.println("<file><name>" + fileName + "</name><size>" + totalBytes + "</size></file>");
+            
+            }catch(NullPointerException e){
+                System.out.println("User is offline");
+            }finally{
+                 fos.close();
+                Server.insertFileDetails(sender, receiver, fileName, Long.toString(totalBytes));
+            }
         } catch (Exception e) {
             System.out.println(e.getMessage());
             e.printStackTrace();

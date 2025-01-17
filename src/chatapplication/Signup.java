@@ -360,7 +360,7 @@ public class Signup extends javax.swing.JFrame {
                     JOptionPane.showMessageDialog(this, "Thanks for signing up " + userName + " Welcome to peerTalk !", "SUCCESS", JOptionPane.INFORMATION_MESSAGE);
                     ps.close();
                     connection.close();
-                    new ChatScreen(userName, email).setVisible(true);
+                    new ChatScreen(userName).setVisible(true);
 
                     this.dispose();
                 }

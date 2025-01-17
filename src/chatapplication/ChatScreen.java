@@ -13,6 +13,7 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FileDialog;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.util.HashSet;
 import java.util.Set;
@@ -24,6 +25,7 @@ import javafx.scene.control.ProgressBar;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -40,9 +42,8 @@ public class ChatScreen extends javax.swing.JFrame {
     /**
      * Creates new form ChatScreen
      */
-    public ChatScreen(String userName, String email) {
+    public ChatScreen(String userName) {
         ChatScreen.userName = userName;
-        ChatScreen.email = email;
         ChatScreen.contactList = new HashSet<>();
         try {
             socket = new Socket("127.0.0.1", 8761);
@@ -67,7 +68,7 @@ public class ChatScreen extends javax.swing.JFrame {
     }
 
     private void initializeClients() {
-        serverOut.println(XMLHandler.createXML(userName, "server", "contactsRetrieval", email));
+        serverOut.println(XMLHandler.createXML(userName, "server", "contactsRetrieval", ""));
         Thread serverListenerThread = new Thread(new ServerListener(socket, chatPanel, recentChatMainPanel, recentChatScrollPane));
         serverListenerThread.start();
     }
@@ -217,6 +218,7 @@ public class ChatScreen extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        currentChatBodyPanel.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         currentChatBodyPanel.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
         javax.swing.GroupLayout chatPanelLayout = new javax.swing.GroupLayout(chatPanel);
@@ -227,7 +229,7 @@ public class ChatScreen extends javax.swing.JFrame {
         );
         chatPanelLayout.setVerticalGroup(
             chatPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 794, Short.MAX_VALUE)
+            .addGap(0, 795, Short.MAX_VALUE)
         );
 
         currentChatBodyPanel.setViewportView(chatPanel);
@@ -421,7 +423,6 @@ public class ChatScreen extends javax.swing.JFrame {
         cancelToggleBtn.setVisible(true);
         if (!newChatPerson.equals("")) {
             serverOut.println(XMLHandler.createXML(userName, "server", "findUser", newChatPerson));
-
         }
     }//GEN-LAST:event_newChatTxtActionPerformed
 
@@ -556,6 +557,28 @@ public class ChatScreen extends javax.swing.JFrame {
 
         }
 
+        JPanel filePanel = new FilePanel(fileName, Long.toString(file.length()));
+
+        // Set alignment to left
+        filePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+     
+
+        // Wrap filePanel in a container
+        JPanel container = new JPanel();
+        container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
+        container.setBackground(chatPanel.getBackground()); // Match chatPanel background
+        container.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // Add filePanel to the container
+        container.add(filePanel);
+
+        // Add spacing below the panel
+        container.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        // Add container to the chatPanel
+        chatPanel.add(container);
+        chatPanel.revalidate();
+        chatPanel.repaint();
         return true;
     }
 
@@ -631,9 +654,9 @@ class ServerListener implements Runnable {
                 } else if (incomingMessage.startsWith("<file>")) {
 
                     receiveFile(incomingMessage);
-                } else if(incomingMessage.startsWith("<fileData>")){
-                        downloadFile(incomingMessage, dis);
-                 }
+                } else if (incomingMessage.startsWith("<fileData>")) {
+                    downloadFile(incomingMessage, dis);
+                }
             }
         } catch (IOException e) {
 
@@ -660,6 +683,16 @@ class ServerListener implements Runnable {
 
     private void displayChatMessage(String message) {
         String messageContent = XMLHandler.extractTag(message, "content");
+        
+        String messageType = XMLHandler.extractTag(message, "contentType");
+        System.out.println(messageType);
+        if(messageType.equalsIgnoreCase("file")){
+            System.out.println("I am inside here");
+            String fileDetails[] = messageContent.split("_%_");
+            displayFile(fileDetails[0], fileDetails[1]);
+            return;
+        }
+        
         String sender;
 
         if (ChatScreen.userName.equals(XMLHandler.extractTag(message, "from"))) {
@@ -763,15 +796,39 @@ class ServerListener implements Runnable {
 
 //            displayFile();
             fos.close();
-           
+
         } catch (Exception e) {
 
         }
     }
 
+//    private void displayFile(String fileName, String size) {
+//        JPanel filePanel = new FilePanel(fileName, size);
+//        chatPanel.add(filePanel);
+//        chatPanel.revalidate();
+//        chatPanel.repaint();
+//    }
     private void displayFile(String fileName, String size) {
+        // Create the FilePanel
         JPanel filePanel = new FilePanel(fileName, size);
-        chatPanel.add(filePanel);
+
+        // Set alignment to left
+        filePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // Wrap filePanel in a container
+        JPanel container = new JPanel();
+        container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
+        container.setBackground(chatPanel.getBackground()); // Match chatPanel background
+        container.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // Add filePanel to the container
+        container.add(filePanel);
+
+        // Add spacing below the panel
+        container.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        // Add container to the chatPanel
+        chatPanel.add(container);
         chatPanel.revalidate();
         chatPanel.repaint();
     }

@@ -6,6 +6,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.*;
 
@@ -57,16 +58,16 @@ public class Server {
         clientInfo.remove(user);
     }
 
-    public static HashSet retrieveContacts(String email) {
+    public static HashSet retrieveContacts(String username) {
         HashSet<String> users = new HashSet<>();
         PreparedStatement ps;
 
-        String sql = "SELECT id FROM users WHERE email = ?";
+        String sql = "SELECT id FROM users WHERE username = ?";
         int id = 0;
         boolean userFound = false;
         try {
             ps = connection.prepareStatement(sql);
-            ps.setString(1, email);
+            ps.setString(1, username);
 
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -108,7 +109,7 @@ public class Server {
     public static String retrieveChatHistory(String user1, String user2) {
         String sender, receiver, contentType, content, status;
         StringBuilder message = new StringBuilder("");
-        Timestamp timeStamp;
+        
         String sql = "SELECT id FROM users WHERE username = ?";
         int userId1 = 0, userId2 = 0;
         try {
@@ -128,12 +129,7 @@ public class Server {
             }
 
             sql = "SELECT \n"
-                    + "    id, \n"
-                    + "    sender_id, \n"
-                    + "    receiver_id, \n"
-                    + "    message, \n"
-                    + "    status, \n"
-                    + "    timestamp\n"
+                    + "* \n"
                     + "FROM messages\n"
                     + "WHERE (sender_id = ? AND receiver_id = ?) \n"
                     + "   OR (sender_id = ? AND receiver_id = ?)\n"
@@ -157,10 +153,22 @@ public class Server {
                 }
 
                 content = rs.getString(4);
-                timeStamp = rs.getTimestamp(6);
+                
                 status = rs.getString(5);
-
-                message.append(XMLHandler.createXML(sender, receiver, "message", content)).append("\n");
+                contentType = rs.getString(6);
+                
+                if(contentType.equals("file")){
+                    sql = "SELECT * FROM files WHERE id = ?";
+                    ps = connection.prepareStatement(sql);
+                    ps.setInt(1, Integer.parseInt(content));
+                    
+                    rs = ps.executeQuery();
+                    while(rs.next()){
+                        content = rs.getString(4) + "_%_" + rs.getString(6);
+                    }
+                }
+                
+                message.append(XMLHandler.createXML(sender, receiver, contentType, content)).append("\n");
             }
 
         } catch (SQLException e) {
@@ -171,7 +179,8 @@ public class Server {
 
     }
 
-    public static void storeMessage(String sender, String receiver, String message, boolean status) {
+    
+    public static void storeMessage(String sender, String receiver, String message, boolean status, String type) {
         String sql = "SELECT id FROM users WHERE username = ?";
         int senderId = 0, receiverId = 0;
         boolean senderFound = false, receiverFound = false;
@@ -192,11 +201,10 @@ public class Server {
                 receiverId = rs.getInt(1);
                 receiverFound = true;
             }
-           
 
             if (senderFound && receiverFound) {
-                sql = "INSERT INTO messages (sender_id, receiver_id, message, status)\n"
-                        + "VALUES (?, ?, ?, ?)";
+                sql = "INSERT INTO messages (sender_id, receiver_id, message, status, type)\n"
+                        + "VALUES (?, ?, ?, ?, ?)";
 
                 ps = connection.prepareStatement(sql);
                 ps.setInt(1, senderId);
@@ -207,7 +215,7 @@ public class Server {
                 } else {
                     ps.setString(4, "sent");
                 }
-
+                ps.setString(5, type);
                 ps.execute();
 
                 sql = "INSERT INTO contacts (user1_id, user2_id, last_contacted)\n"
@@ -230,7 +238,7 @@ public class Server {
     }
 
     public static void setActiveReceiver(String sender, String receiver) {
-        
+
         currentReceiver.put(sender, receiver);
         System.out.println(currentReceiver);
     }
@@ -243,15 +251,74 @@ public class Server {
             ps.setString(1, user);
 
             ResultSet rs = ps.executeQuery();
-            
-            while(rs.next()){
+
+            while (rs.next()) {
                 users.add(rs.getString(2));
             }
 
-        }catch(SQLException e){
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         System.out.println(users);
         return users;
+    }
+
+    public static void insertFileDetails(String sender, String receiver, String fileName, String fileSize) {
+
+        String sql = "SELECT id FROM users WHERE username = ?";
+        int senderId = 0;
+        int receiverId = 0;
+        boolean userFound = false;
+        PreparedStatement ps;
+        try {
+            ps = connection.prepareStatement(sql);
+            ps.setString(1, sender);
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                senderId = rs.getInt(1);
+            }
+
+            ps = connection.prepareStatement(sql);
+            ps.setString(1, receiver);
+
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                receiverId = rs.getInt(1);
+            }
+
+            if (senderId != 0 && receiverId != 0) {
+                sql = "INSERT INTO files(sender_id, receiver_id, og_file_name, new_file_name, file_size) VALUES (?, ?, ?, ?, ?)";
+               ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS); // Add this flag here
+
+                ps.setInt(1, senderId);
+                ps.setInt(2, receiverId);
+                ps.setString(3, fileName);
+                ps.setString(4, Integer.toString(senderId) + "_" + fileName);
+                ps.setString(5, fileSize);
+
+                int rowsAffected = ps.executeUpdate();
+                long autoIncrementedId = 0;
+                if (rowsAffected > 0) {
+                    // Retrieve the generated keys
+                    try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                        if (generatedKeys.next()) {
+                            // Get the auto-incremented ID
+                            autoIncrementedId = generatedKeys.getLong(1);
+                            System.out.println("Auto-incremented ID: " + autoIncrementedId);
+                        }
+                    }
+                } else {
+                    System.out.println("Insert failed, no ID generated.");
+                    return;
+                }
+                
+                Server.storeMessage(sender, receiver, Long.toString(autoIncrementedId), true, "file");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+//        String sql = "INSERT INTO files(sender_id, receiver_id, og_file_name, new_file_name, file_size) VALUES (?, ?, ?, ?)";
+
     }
 }
