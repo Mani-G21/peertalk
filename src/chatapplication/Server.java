@@ -161,13 +161,13 @@ public class Server {
                     sql = "SELECT * FROM files WHERE id = ?";
                     ps = connection.prepareStatement(sql);
                     ps.setInt(1, Integer.parseInt(content));
+                    ResultSet rsFile = ps.executeQuery();
                     
-                    rs = ps.executeQuery();
-                    while(rs.next()){
-                        content = rs.getString(4) + "_%_" + rs.getString(6);
+                    while(rsFile.next()){
+                        content = rsFile.getString(4) + "_%_" + rsFile.getString(6);
                     }
+                    System.out.println("received file history " + content);
                 }
-                
                 message.append(XMLHandler.createXML(sender, receiver, contentType, content)).append("\n");
             }
 

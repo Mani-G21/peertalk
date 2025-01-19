@@ -5,6 +5,7 @@
 package chatapplication;
 
 import static chatapplication.ChatScreen.recentChatMainPanel;
+import static chatapplication.ServerListener.convertBytes;
 import java.awt.BorderLayout;
 import java.io.*;
 import java.net.*;
@@ -27,11 +28,16 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -45,6 +51,7 @@ public class ChatScreen extends javax.swing.JFrame {
     public ChatScreen(String userName) {
         ChatScreen.userName = userName;
         ChatScreen.contactList = new HashSet<>();
+
         try {
             socket = new Socket("127.0.0.1", 8761);
             serverOut = new PrintWriter(socket.getOutputStream(), true);
@@ -55,6 +62,7 @@ public class ChatScreen extends javax.swing.JFrame {
 
         }
         initComponents();
+        loggedInUserLabel.setText(" " + userName);
         cancelToggleBtn.setVisible(false);
         initializeClients();
 
@@ -69,7 +77,7 @@ public class ChatScreen extends javax.swing.JFrame {
 
     private void initializeClients() {
         serverOut.println(XMLHandler.createXML(userName, "server", "contactsRetrieval", ""));
-        Thread serverListenerThread = new Thread(new ServerListener(socket, chatPanel, recentChatMainPanel, recentChatScrollPane));
+        Thread serverListenerThread = new Thread(new ServerListener(socket, chatPanel, recentChatMainPanel, recentChatScrollPane, this, currentChatBodyPanel));
         serverListenerThread.start();
     }
 
@@ -84,9 +92,6 @@ public class ChatScreen extends javax.swing.JFrame {
 
         jToggleButton1 = new javax.swing.JToggleButton();
         jPanel1 = new javax.swing.JPanel();
-        jPanel2 = new javax.swing.JPanel();
-        homeButton = new javax.swing.JLabel();
-        logoutButton = new javax.swing.JLabel();
         recentChatScrollPane = new javax.swing.JScrollPane();
         recentChatMainPanel = new javax.swing.JPanel();
         recentChatPanel = new javax.swing.JPanel();
@@ -97,8 +102,8 @@ public class ChatScreen extends javax.swing.JFrame {
         currentChatBodyPanel = new javax.swing.JScrollPane();
         chatPanel = new javax.swing.JPanel();
         currentChatTxt = new javax.swing.JTextField();
-        sendButton = new javax.swing.JButton();
-        fileSelectButton = new javax.swing.JButton();
+        fileSelectButton = new javax.swing.JLabel();
+        sendButton = new javax.swing.JLabel();
         jPanel6 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         newChatTxt = new javax.swing.JTextField();
@@ -106,59 +111,29 @@ public class ChatScreen extends javax.swing.JFrame {
         jPanel8 = new javax.swing.JPanel();
         chatsLabel = new javax.swing.JLabel();
         cancelToggleBtn = new javax.swing.JLabel();
+        loggedInUserLabel = new javax.swing.JLabel();
+        logoutLabel = new javax.swing.JLabel();
 
         jToggleButton1.setText("jToggleButton1");
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
 
-        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel1.setBackground(new Color(47, 49, 54));
 
-        jPanel2.setBackground(new java.awt.Color(255, 255, 255));
-        jPanel2.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-
-        homeButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/chatapplication/homeButtonLogo.jpg"))); // NOI18N
-        homeButton.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                homeButtonMouseClicked(evt);
-            }
-        });
-
-        logoutButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/chatapplication/logoutButton.png"))); // NOI18N
-
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(logoutButton)
-                    .addComponent(homeButton))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(homeButton)
-                .addGap(18, 18, 18)
-                .addComponent(logoutButton)
-                .addGap(16, 16, 16))
-        );
-
-        recentChatScrollPane.setBackground(new java.awt.Color(102, 102, 102));
+        recentChatScrollPane.setBackground(new Color(47, 49, 54));
+        recentChatScrollPane.setBorder(null);
         recentChatScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         recentChatScrollPane.setHorizontalScrollBar(null);
 
-        recentChatMainPanel.setBackground(new java.awt.Color(255, 255, 255));
+        recentChatMainPanel.setBackground(new Color(47, 49, 54)
+        );
 
         recentChatPanel.setBackground(new java.awt.Color(255, 255, 255));
-        recentChatPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(204, 204, 204)));
 
-        recentChatLabel.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
-        recentChatLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        recentChatLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/chatapplication/chatLogoPerson.jpg"))); // NOI18N
+        recentChatLabel.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        recentChatLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        recentChatLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/chatapplication/chatMessageUserLogo.png"))); // NOI18N
         recentChatLabel.setText("Manish Ghindwani");
         recentChatLabel.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         recentChatLabel.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -171,7 +146,9 @@ public class ChatScreen extends javax.swing.JFrame {
         recentChatPanel.setLayout(recentChatPanelLayout);
         recentChatPanelLayout.setHorizontalGroup(
             recentChatPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(recentChatLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 397, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, recentChatPanelLayout.createSequentialGroup()
+                .addGap(0, 31, Short.MAX_VALUE)
+                .addComponent(recentChatLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 383, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         recentChatPanelLayout.setVerticalGroup(
             recentChatPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -192,23 +169,28 @@ public class ChatScreen extends javax.swing.JFrame {
             .addGroup(recentChatMainPanelLayout.createSequentialGroup()
                 .addGap(0, 0, 0)
                 .addComponent(recentChatPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(676, Short.MAX_VALUE))
+                .addContainerGap(704, Short.MAX_VALUE))
         );
 
         recentChatScrollPane.setViewportView(recentChatMainPanel);
 
-        currentChatHeader.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel4.setBackground(new Color(54, 57, 63));
 
-        currentChatLabel.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
+        currentChatHeader.setBackground(new Color(47, 49, 54));
+
+        currentChatLabel.setBackground(new Color(47, 49, 54));
+        currentChatLabel.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        currentChatLabel.setForeground(new java.awt.Color(255, 255, 255));
         currentChatLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        currentChatLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/chatapplication/chatLogoPerson.jpg"))); // NOI18N
+        currentChatLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/chatapplication/chatMessageUserLogo.png"))); // NOI18N
+        currentChatLabel.setText("Manish Ghindwani");
         currentChatLabel.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 
         javax.swing.GroupLayout currentChatHeaderLayout = new javax.swing.GroupLayout(currentChatHeader);
         currentChatHeader.setLayout(currentChatHeaderLayout);
         currentChatHeaderLayout.setHorizontalGroup(
             currentChatHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(currentChatLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 982, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(currentChatLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         currentChatHeaderLayout.setVerticalGroup(
             currentChatHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -218,8 +200,12 @@ public class ChatScreen extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        currentChatBodyPanel.setBackground(new Color(54, 57, 63));
+        currentChatBodyPanel.setBorder(null);
         currentChatBodyPanel.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         currentChatBodyPanel.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+
+        chatPanel.setBackground(new Color(54, 57, 63));
 
         javax.swing.GroupLayout chatPanelLayout = new javax.swing.GroupLayout(chatPanel);
         chatPanel.setLayout(chatPanelLayout);
@@ -229,16 +215,28 @@ public class ChatScreen extends javax.swing.JFrame {
         );
         chatPanelLayout.setVerticalGroup(
             chatPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 795, Short.MAX_VALUE)
+            .addGap(0, 835, Short.MAX_VALUE)
         );
 
         currentChatBodyPanel.setViewportView(chatPanel);
 
+        currentChatTxt.setBackground(new java.awt.Color(102, 102, 102));
         currentChatTxt.setFont(new java.awt.Font("Segoe UI", 0, 20)); // NOI18N
+        currentChatTxt.setForeground(new java.awt.Color(255, 255, 255));
         currentChatTxt.setToolTipText("");
+        currentChatTxt.setCaretColor(new java.awt.Color(255, 255, 255));
+        currentChatTxt.setHighlighter(null);
+        currentChatTxt.setOpaque(true);
         currentChatTxt.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 currentChatTxtActionPerformed(evt);
+            }
+        });
+
+        fileSelectButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/chatapplication/fileFolder.png"))); // NOI18N
+        fileSelectButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                fileSelectButtonMouseClicked(evt);
             }
         });
 
@@ -248,57 +246,48 @@ public class ChatScreen extends javax.swing.JFrame {
                 sendButtonMouseClicked(evt);
             }
         });
-        sendButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                sendButtonActionPerformed(evt);
-            }
-        });
-
-        fileSelectButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/chatapplication/fileFolder.png"))); // NOI18N
-        fileSelectButton.setText("jButton1");
-        fileSelectButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        fileSelectButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                fileSelectButtonActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(currentChatHeader, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(currentChatBodyPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1014, Short.MAX_VALUE)
             .addGroup(jPanel4Layout.createSequentialGroup()
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(currentChatHeader, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(currentChatBodyPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel4Layout.createSequentialGroup()
-                        .addComponent(currentChatTxt, javax.swing.GroupLayout.PREFERRED_SIZE, 858, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, 0)
-                        .addComponent(fileSelectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, 0)
-                        .addComponent(sendButton)))
-                .addGap(0, 0, Short.MAX_VALUE))
+                .addGap(11, 11, 11)
+                .addComponent(fileSelectButton)
+                .addGap(18, 18, 18)
+                .addComponent(currentChatTxt, javax.swing.GroupLayout.PREFERRED_SIZE, 860, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(sendButton)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addComponent(currentChatHeader, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
-                .addComponent(currentChatBodyPanel)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(currentChatTxt)
-                    .addComponent(sendButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(fileSelectButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(currentChatBodyPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 819, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(fileSelectButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(currentChatTxt))
+                    .addComponent(sendButton))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jPanel6.setBackground(new java.awt.Color(255, 255, 255));
-        jPanel6.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(204, 204, 204)));
+        jPanel6.setBackground(new Color(47, 49, 54));
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
+        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("New Chat");
 
+        newChatTxt.setBackground(new java.awt.Color(102, 102, 102));
         newChatTxt.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
+        newChatTxt.setForeground(new java.awt.Color(255, 255, 255));
         newChatTxt.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        newChatTxt.setCaretColor(new java.awt.Color(255, 255, 255));
         newChatTxt.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newChatTxtActionPerformed(evt);
@@ -315,7 +304,7 @@ public class ChatScreen extends javax.swing.JFrame {
                     .addComponent(newChatSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 364, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel1)
                     .addComponent(newChatTxt, javax.swing.GroupLayout.PREFERRED_SIZE, 364, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(27, Short.MAX_VALUE))
+                .addContainerGap(23, Short.MAX_VALUE))
         );
         jPanel6Layout.setVerticalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -329,9 +318,11 @@ public class ChatScreen extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        jPanel8.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel8.setBackground(new Color(47, 49, 54));
 
+        chatsLabel.setBackground(new Color(54, 57, 63));
         chatsLabel.setFont(new java.awt.Font("Segoe UI Historic", 1, 24)); // NOI18N
+        chatsLabel.setForeground(new java.awt.Color(255, 255, 255));
         chatsLabel.setText("Chats");
 
         cancelToggleBtn.setBackground(new java.awt.Color(51, 102, 255));
@@ -352,49 +343,64 @@ public class ChatScreen extends javax.swing.JFrame {
         jPanel8Layout.setHorizontalGroup(
             jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel8Layout.createSequentialGroup()
-                .addGap(30, 30, 30)
+                .addGap(27, 27, 27)
                 .addComponent(chatsLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 105, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(cancelToggleBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(20, 20, 20))
         );
         jPanel8Layout.setVerticalGroup(
             jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel8Layout.createSequentialGroup()
-                .addContainerGap(39, Short.MAX_VALUE)
-                .addComponent(chatsLabel)
-                .addGap(31, 31, 31))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel8Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(cancelToggleBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(10, Short.MAX_VALUE)
+                .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cancelToggleBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(chatsLabel))
+                .addContainerGap(10, Short.MAX_VALUE))
         );
+
+        loggedInUserLabel.setBackground(new Color(47, 49, 54));
+        loggedInUserLabel.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        loggedInUserLabel.setForeground(new java.awt.Color(255, 255, 255));
+        loggedInUserLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        loggedInUserLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/chatapplication/senderChatMessageUserLogo.png"))); // NOI18N
+        loggedInUserLabel.setText("You");
+
+        logoutLabel.setBackground(new Color(47, 49, 54));
+        logoutLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/chatapplication/logoutLogo.png"))); // NOI18N
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(recentChatScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 414, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addComponent(jPanel8, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(recentChatScrollPane, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 393, Short.MAX_VALUE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(18, 18, 18)
+                        .addComponent(loggedInUserLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(logoutLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(4, 4, 4)
                 .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+            .addGroup(jPanel1Layout.createSequentialGroup()
                 .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(recentChatScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 713, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(recentChatScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 654, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(44, 44, 44)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(loggedInUserLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 56, Short.MAX_VALUE)
+                    .addComponent(logoutLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -426,47 +432,83 @@ public class ChatScreen extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_newChatTxtActionPerformed
 
-    private void sendButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendButtonActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_sendButtonActionPerformed
-
-    private void sendButtonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_sendButtonMouseClicked
-        String message = currentChatTxt.getText();
-
-        if (!message.equalsIgnoreCase("")) {
-            JLabel messageLabel = new JLabel("<html><b>You:</b><br>&nbsp;&nbsp;&nbsp;" + message + "</html>");
-
-            messageLabel.setOpaque(true);
-            messageLabel.setForeground(Color.BLACK);
-            messageLabel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-
-            messageLabel.setFont(new Font("Times New Roman", Font.PLAIN, 24));
-            chatPanel.add(messageLabel);
-            chatPanel.revalidate();
-            chatPanel.repaint();
-            currentChatTxt.setText("");
-            currentChatTxt.requestFocus();
-
-            String receiver = currentChatLabel.getText();
-            serverOut.println(XMLHandler.createXML(userName, receiver, "sendMessage", message));
-
-        }
-    }//GEN-LAST:event_sendButtonMouseClicked
-
     private void currentChatTxtActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_currentChatTxtActionPerformed
         String message = currentChatTxt.getText();
 
         if (!message.equalsIgnoreCase("")) {
-            JLabel messageLabel = new JLabel("<html><b>You:</b><br>&nbsp;&nbsp;&nbsp;" + message + "</html>");
+            JPanel messageContainer = new JPanel();
+            messageContainer.setLayout(new BoxLayout(messageContainer, BoxLayout.X_AXIS));
+            messageContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
+            messageContainer.setMaximumSize(new Dimension(chatPanel.getWidth(), 100)); // Ensure full horizontal expansion
+            messageContainer.setBackground(new Color(54, 57, 63)); // Discord dark theme background
 
-            messageLabel.setOpaque(true);
-            messageLabel.setForeground(Color.BLACK);
-            messageLabel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+            JLabel avatarLabel = new JLabel(new ImageIcon(getClass().getResource("/chatapplication/senderChatMessageUserLogo.PNG")));
 
-            messageLabel.setFont(new Font("Times New Roman", Font.PLAIN, 24));
-            chatPanel.add(messageLabel);
+            // Replace with actual sender profile image path 
+            avatarLabel.setPreferredSize(new Dimension(60, 60));
+            avatarLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 10));
+
+// Add left margin
+            messageContainer.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0)); // Add 10px left margin
+
+// Message Content
+            JPanel messageContentPanel = new JPanel();
+            messageContentPanel.setLayout(new BoxLayout(messageContentPanel, BoxLayout.Y_AXIS));
+            messageContentPanel.setBackground(new Color(54, 57, 63)); // Discord dark theme background
+            messageContentPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5)); // Reduced padding
+            messageContentPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+// Username and Timestamp
+            JLabel userLabel = new JLabel("You");
+            userLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+            userLabel.setForeground(Color.GREEN);
+
+            JLabel timeLabel = new JLabel(java.time.LocalTime.now().toString());
+            timeLabel.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+            timeLabel.setForeground(Color.GRAY);
+
+            JPanel headerPanel = new JPanel();
+            headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.X_AXIS));
+            headerPanel.setBackground(new Color(54, 57, 63)); // Discord dark theme background
+            headerPanel.add(userLabel);
+            headerPanel.add(Box.createHorizontalStrut(5));
+            headerPanel.add(timeLabel);
+            headerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+// Message Text
+            JTextArea messageArea = new JTextArea();
+            messageArea.setText(message);
+            messageArea.setWrapStyleWord(true);
+            messageArea.setLineWrap(true);
+            messageArea.setOpaque(true);
+            messageArea.setForeground(Color.WHITE);
+            messageArea.setBackground(new Color(54, 57, 63)); // Discord message bubble background
+            messageArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+            messageArea.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+            messageArea.setEditable(false);
+            messageArea.setAlignmentX(Component.LEFT_ALIGNMENT);
+            messageArea.setMaximumSize(new Dimension(chatPanel.getWidth() - 60, 100));
+            // Ensure full horizontal expansion
+
+// Add header and message text to message content panel
+            messageContentPanel.add(headerPanel);
+            messageContentPanel.add(Box.createVerticalStrut(5));
+            messageContentPanel.add(messageArea);
+
+// Add avatar and message content to container
+            messageContainer.add(avatarLabel);
+            messageContainer.add(messageContentPanel);
+
+// Add spacing below message
+            chatPanel.add(messageContainer);
+            chatPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+
             chatPanel.revalidate();
             chatPanel.repaint();
+
+            JScrollBar verticalScrollBar = currentChatBodyPanel.getVerticalScrollBar();
+            SwingUtilities.invokeLater(() -> verticalScrollBar.setValue(verticalScrollBar.getMaximum()));
+
             currentChatTxt.setText("");
             currentChatTxt.requestFocus();
 
@@ -481,38 +523,108 @@ public class ChatScreen extends javax.swing.JFrame {
 
     }//GEN-LAST:event_recentChatLabelMouseClicked
 
-    private void homeButtonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_homeButtonMouseClicked
-        currentChatBodyPanel.setVisible(false);
-        currentChatHeader.setVisible(false);
-        currentChatLabel.setVisible(false);
-        currentChatTxt.setVisible(false);
-        sendButton.setVisible(false);
-        chatPanel.setVisible(false);
-        fileSelectButton.setVisible(false);
-        chatPanel.removeAll();
-
-        chatPanel.revalidate();
-        chatPanel.repaint();
-    }//GEN-LAST:event_homeButtonMouseClicked
-
     private void cancelToggleBtnMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cancelToggleBtnMouseClicked
         initializeClients();
         newChatTxt.setText("");
-        homeButtonMouseClicked(evt);
         chatsLabel.setText("Chats");
         cancelToggleBtn.setVisible(false);
     }//GEN-LAST:event_cancelToggleBtnMouseClicked
 
-    private void fileSelectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileSelectButtonActionPerformed
+    private void sendButtonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_sendButtonMouseClicked
+        String message = currentChatTxt.getText();
+
+        if (!message.equalsIgnoreCase("")) {
+            JPanel messageContainer = new JPanel();
+            messageContainer.setLayout(new BoxLayout(messageContainer, BoxLayout.X_AXIS));
+            messageContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
+            messageContainer.setMaximumSize(new Dimension(chatPanel.getWidth(), 100)); // Ensure full horizontal expansion
+            messageContainer.setBackground(new Color(54, 57, 63)); // Discord dark theme background
+
+            JLabel avatarLabel = new JLabel(new ImageIcon(getClass().getResource("/chatapplication/senderChatMessageUserLogo.PNG")));
+
+            // Replace with actual sender profile image path 
+            avatarLabel.setPreferredSize(new Dimension(60, 60));
+            avatarLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 10));
+
+// Add left margin
+            messageContainer.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0)); // Add 10px left margin
+
+// Message Content
+            JPanel messageContentPanel = new JPanel();
+            messageContentPanel.setLayout(new BoxLayout(messageContentPanel, BoxLayout.Y_AXIS));
+            messageContentPanel.setBackground(new Color(54, 57, 63)); // Discord dark theme background
+            messageContentPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5)); // Reduced padding
+            messageContentPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+// Username and Timestamp
+            JLabel userLabel = new JLabel("You");
+            userLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+
+            userLabel.setForeground(Color.GREEN);
+
+            JLabel timeLabel = new JLabel(java.time.LocalTime.now().toString());
+            timeLabel.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+            timeLabel.setForeground(Color.GRAY);
+
+            JPanel headerPanel = new JPanel();
+            headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.X_AXIS));
+            headerPanel.setBackground(new Color(54, 57, 63)); // Discord dark theme background
+            headerPanel.add(userLabel);
+            headerPanel.add(Box.createHorizontalStrut(5));
+            headerPanel.add(timeLabel);
+            headerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+// Message Text
+            JTextArea messageArea = new JTextArea();
+            messageArea.setText(message);
+            messageArea.setWrapStyleWord(true);
+            messageArea.setLineWrap(true);
+            messageArea.setOpaque(true);
+            messageArea.setForeground(Color.WHITE);
+            messageArea.setBackground(new Color(54, 57, 63)); // Discord message bubble background
+            messageArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+            messageArea.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+            messageArea.setEditable(false);
+            messageArea.setAlignmentX(Component.LEFT_ALIGNMENT);
+            messageArea.setMaximumSize(new Dimension(chatPanel.getWidth() - 60, 100));
+            // Ensure full horizontal expansion
+
+// Add header and message text to message content panel
+            messageContentPanel.add(headerPanel);
+            messageContentPanel.add(Box.createVerticalStrut(5));
+            messageContentPanel.add(messageArea);
+
+// Add avatar and message content to container
+            messageContainer.add(avatarLabel);
+            messageContainer.add(messageContentPanel);
+
+// Add spacing below message
+            chatPanel.add(messageContainer);
+            chatPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+            chatPanel.revalidate();
+            chatPanel.repaint();
+
+            JScrollBar verticalScrollBar = currentChatBodyPanel.getVerticalScrollBar();
+            SwingUtilities.invokeLater(() -> verticalScrollBar.setValue(verticalScrollBar.getMaximum()));
+
+            currentChatTxt.setText("");
+            currentChatTxt.requestFocus();
+
+            String receiver = currentChatLabel.getText();
+            serverOut.println(XMLHandler.createXML(userName, receiver, "sendMessage", message));
+
+        }
+    }//GEN-LAST:event_sendButtonMouseClicked
+
+    private void fileSelectButtonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_fileSelectButtonMouseClicked
         FileDialog fd = new FileDialog(this, "Select a file", FileDialog.LOAD);
         fd.setVisible(true);
         if (fd.getDirectory() != null || fd.getFile() != null) {
 
             sendFile(fd.getDirectory() + fd.getFile(), fd.getFile(), userName, currentChatLabel.getText());
         }
-
-
-    }//GEN-LAST:event_fileSelectButtonActionPerformed
+    }//GEN-LAST:event_fileSelectButtonMouseClicked
 
     public static void handleUI(java.awt.event.MouseEvent evt) {
         chatPanel.removeAll();
@@ -532,20 +644,20 @@ public class ChatScreen extends javax.swing.JFrame {
         serverOut.println(XMLHandler.createXML(userName, "server", "retrieveChatHistory", receiver));
     }
 
-    private static boolean sendFile(String filePath, String fileName, String sender, String receiver) {
+    private boolean sendFile(String filePath, String fileName, String sender, String receiver) {
         File file = new File(filePath);
 
         int bufferSize = (int) Math.min(file.length(), 64 * 1024);
         byte[] buffer = new byte[bufferSize];
         serverOut.println(XMLHandler.createXML(userName, currentChatLabel.getText(), "sendFile", fileName));
-
+        int totalBytes = 0;
         try {
             FileInputStream fis = new FileInputStream(file);
             DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
             dos.writeLong(file.length());
 
             int bytesRead;
-            int totalBytes = 0;
+
             while ((bytesRead = fis.read(buffer)) != -1) {
                 dos.write(buffer, 0, bytesRead);
                 totalBytes += bytesRead;
@@ -557,28 +669,66 @@ public class ChatScreen extends javax.swing.JFrame {
 
         }
 
-        JPanel filePanel = new FilePanel(fileName, Long.toString(file.length()));
+        JPanel filePanel = new FilePanel(fileName, convertBytes(totalBytes));
 
         // Set alignment to left
         filePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-     
 
         // Wrap filePanel in a container
         JPanel container = new JPanel();
-        container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
-        container.setBackground(chatPanel.getBackground()); // Match chatPanel background
+        container.setLayout(new BoxLayout(container, BoxLayout.X_AXIS));
+        container.setBackground(new Color(54, 57, 63)); // Match chatPanel background
         container.setAlignmentX(Component.LEFT_ALIGNMENT);
+        container.setMaximumSize(new Dimension(chatPanel.getWidth(), filePanel.getPreferredSize().height + 20)); // Ensure it only takes up the necessary vertical space
 
-        // Add filePanel to the container
-        container.add(filePanel);
+        // Add left margin
+        container.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0)); // Add 20px left margin
+
+        // User Avatar
+        JLabel avatarLabel = new JLabel(new ImageIcon(getClass().getResource("/chatapplication/chatMessageUserLogo.PNG"))); // Replace with actual sender profile image path
+        avatarLabel.setPreferredSize(new Dimension(50, 50));
+        avatarLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 10));
+
+        // File Content Panel
+        JPanel fileContentPanel = new JPanel();
+        fileContentPanel.setLayout(new BoxLayout(fileContentPanel, BoxLayout.Y_AXIS));
+        fileContentPanel.setBackground(new Color(54, 57, 63)); // Discord dark theme background
+        fileContentPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5)); // Reduced padding
+        fileContentPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // File Name and Size
+        JLabel fileNameLabel = new JLabel(fileName);
+        fileNameLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        fileNameLabel.setForeground(Color.WHITE);
+
+        JPanel headerPanel = new JPanel();
+        headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.X_AXIS));
+        headerPanel.setBackground(new Color(54, 57, 63)); // Discord dark theme background
+        headerPanel.add(fileNameLabel);
+        headerPanel.add(Box.createHorizontalStrut(5));
+        headerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // Add header to file content panel
+        fileContentPanel.add(headerPanel);
+
+        // Add file panel to file content panel
+        fileContentPanel.add(filePanel);
+
+        // Add avatar and file content to container
+        container.add(avatarLabel);
+        container.add(fileContentPanel);
 
         // Add spacing below the panel
-        container.add(Box.createRigidArea(new Dimension(0, 10)));
-
-        // Add container to the chatPanel
         chatPanel.add(container);
+        chatPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        // Refresh chat panel
         chatPanel.revalidate();
         chatPanel.repaint();
+
+        JScrollBar verticalScrollBar = currentChatBodyPanel.getVerticalScrollBar();
+        SwingUtilities.invokeLater(() -> verticalScrollBar.setValue(verticalScrollBar.getMaximum()));
+
         return true;
     }
 
@@ -599,23 +749,22 @@ public class ChatScreen extends javax.swing.JFrame {
     public static javax.swing.JPanel currentChatHeader;
     public static javax.swing.JLabel currentChatLabel;
     public static javax.swing.JTextField currentChatTxt;
-    private static javax.swing.JButton fileSelectButton;
-    private javax.swing.JLabel homeButton;
+    public static javax.swing.JLabel fileSelectButton;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel8;
     private javax.swing.JToggleButton jToggleButton1;
-    private javax.swing.JLabel logoutButton;
+    private javax.swing.JLabel loggedInUserLabel;
+    private javax.swing.JLabel logoutLabel;
     private javax.swing.JSeparator newChatSeparator;
     private javax.swing.JTextField newChatTxt;
     private javax.swing.JLabel recentChatLabel;
     public static javax.swing.JPanel recentChatMainPanel;
     private javax.swing.JPanel recentChatPanel;
     private javax.swing.JScrollPane recentChatScrollPane;
-    public static javax.swing.JButton sendButton;
+    public static javax.swing.JLabel sendButton;
     // End of variables declaration//GEN-END:variables
 
 }
@@ -626,12 +775,16 @@ class ServerListener implements Runnable {
     private final JPanel chatPanel;
     private final JPanel recentChatMainPanel;
     private final JScrollPane recentChatScrollPane;
+    private final JFrame chatScreen;
+    private final JScrollPane currentChatBodyPanel;
 
-    public ServerListener(Socket socket, JPanel chatPanel, JPanel recentChatMainPanel, JScrollPane recentChatScrollPane) {
+    public ServerListener(Socket socket, JPanel chatPanel, JPanel recentChatMainPanel, JScrollPane recentChatScrollPane, ChatScreen chatScreen, JScrollPane currentChatBodyPanel) {
         this.socket = socket;
         this.chatPanel = chatPanel;
         this.recentChatMainPanel = recentChatMainPanel;
         this.recentChatScrollPane = recentChatScrollPane;
+        this.chatScreen = chatScreen;
+        this.currentChatBodyPanel = currentChatBodyPanel;
     }
 
     @Override
@@ -673,7 +826,7 @@ class ServerListener implements Runnable {
             String userName = userMatcher.group(1);
 
             ChatScreen.contactList.add(userName);
-            addRecentChat(userName, "/chatapplication/chatLogoPerson.jpg");
+            addRecentChat(userName, "/chatapplication/chatMessageUserLogo.PNG");
 
         }
 
@@ -682,17 +835,18 @@ class ServerListener implements Runnable {
     }
 
     private void displayChatMessage(String message) {
+
         String messageContent = XMLHandler.extractTag(message, "content");
-        
+
         String messageType = XMLHandler.extractTag(message, "contentType");
         System.out.println(messageType);
-        if(messageType.equalsIgnoreCase("file")){
-            System.out.println("I am inside here");
+        if (messageType.equalsIgnoreCase("file")) {
             String fileDetails[] = messageContent.split("_%_");
-            displayFile(fileDetails[0], fileDetails[1]);
+            System.out.println("received file name " + fileDetails[0]);
+            displayFile(fileDetails[0], Long.parseLong(fileDetails[1]));
             return;
         }
-        
+
         String sender;
 
         if (ChatScreen.userName.equals(XMLHandler.extractTag(message, "from"))) {
@@ -702,25 +856,96 @@ class ServerListener implements Runnable {
         }
 
         if (!sender.equalsIgnoreCase("You") && ChatScreen.contactList.add(sender)) {
-            addRecentChat(sender, "/chatapplication/chatLogoPerson.jpg");
+            addRecentChat(sender, "/chatapplication/chatMessageUserLogo.PNG");
         }
 
         if (ChatScreen.currentChatLabel.getText().equals(sender) || sender.equalsIgnoreCase("You")) {
-            if (messageContent != null) {
-                JLabel messageLabel = new JLabel("<html><b>" + sender + "</b><br>&nbsp;&nbsp;&nbsp;" + messageContent + "</html>");
-                messageLabel.setOpaque(true);
-                messageLabel.setForeground(Color.BLACK);
-                messageLabel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-                messageLabel.setFont(new Font("Times New Roman", Font.PLAIN, 24));
+            if (messageContent != null) {// Create a container panel for the message
+                JPanel messageContainer = new JPanel();
+                messageContainer.setLayout(new BoxLayout(messageContainer, BoxLayout.X_AXIS));
+                messageContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
+                messageContainer.setMaximumSize(new Dimension(chatPanel.getWidth(), 100)); // Ensure full horizontal expansion
+                messageContainer.setBackground(new Color(54, 57, 63)); // Discord dark theme background
 
-                chatPanel.add(messageLabel);
+                JLabel avatarLabel;
+                if (sender.equalsIgnoreCase("You")) {
+                    avatarLabel = new JLabel(new ImageIcon(getClass().getResource("/chatapplication/senderChatMessageUserLogo.PNG")));
+                } else {
+                    avatarLabel = new JLabel(new ImageIcon(getClass().getResource("/chatapplication/chatMessageUserLogo.PNG")));
+                }
+                // Replace with actual sender profile image path 
+                avatarLabel.setPreferredSize(new Dimension(60, 60));
+                avatarLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 10));
+
+// Add left margin
+                messageContainer.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0)); // Add 10px left margin
+
+// Message Content
+                JPanel messageContentPanel = new JPanel();
+                messageContentPanel.setLayout(new BoxLayout(messageContentPanel, BoxLayout.Y_AXIS));
+                messageContentPanel.setBackground(new Color(54, 57, 63)); // Discord dark theme background
+                messageContentPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5)); // Reduced padding
+                messageContentPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+// Username and Timestamp
+                JLabel userLabel = new JLabel(sender);
+                userLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+
+                if (sender.equalsIgnoreCase("You")) {
+                    userLabel.setForeground(Color.GREEN);
+                } else {
+                    userLabel.setForeground(new Color(114, 137, 218));
+                }
+
+                JLabel timeLabel = new JLabel(java.time.LocalTime.now().toString());
+                timeLabel.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+                timeLabel.setForeground(Color.GRAY);
+
+                JPanel headerPanel = new JPanel();
+                headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.X_AXIS));
+                headerPanel.setBackground(new Color(54, 57, 63)); // Discord dark theme background
+                headerPanel.add(userLabel);
+                headerPanel.add(Box.createHorizontalStrut(5));
+                headerPanel.add(timeLabel);
+                headerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+// Message Text
+                JTextArea messageArea = new JTextArea();
+                messageArea.setText(messageContent);
+                messageArea.setWrapStyleWord(true);
+                messageArea.setLineWrap(true);
+                messageArea.setOpaque(true);
+                messageArea.setForeground(Color.WHITE);
+                messageArea.setBackground(new Color(54, 57, 63)); // Discord message bubble background
+                messageArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+                messageArea.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+                messageArea.setEditable(false);
+                messageArea.setAlignmentX(Component.LEFT_ALIGNMENT);
+                messageArea.setMaximumSize(new Dimension(chatPanel.getWidth() - 60, 100));
+                // Ensure full horizontal expansion
+
+// Add header and message text to message content panel
+                messageContentPanel.add(headerPanel);
+                messageContentPanel.add(Box.createVerticalStrut(5));
+                messageContentPanel.add(messageArea);
+
+// Add avatar and message content to container
+                messageContainer.add(avatarLabel);
+                messageContainer.add(messageContentPanel);
+
+// Add spacing below message
+                chatPanel.add(messageContainer);
+                chatPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+// Refresh chat panel
                 chatPanel.revalidate();
                 chatPanel.repaint();
-            } else {
+
+                JScrollBar verticalScrollBar = currentChatBodyPanel.getVerticalScrollBar();
+                SwingUtilities.invokeLater(() -> verticalScrollBar.setValue(verticalScrollBar.getMaximum()));
 
             }
         }
-
     }
 
     private void addRecentChat(String userName, String iconPath) {
@@ -729,16 +954,21 @@ class ServerListener implements Runnable {
         }
 
         JPanel recentChatPanel = new JPanel();
-        recentChatPanel.setBackground(new java.awt.Color(255, 255, 255));
-        recentChatPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(204, 204, 204)));
-        recentChatPanel.setMaximumSize(new Dimension(397, 100)); // Set consistent size for the panel
+        recentChatPanel.setBackground(new java.awt.Color(47, 49, 54)); // Discord dark theme background
+        recentChatPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(54, 57, 63)));
+        recentChatPanel.setMaximumSize(new Dimension(397, 60)); // Set consistent size for the panel
         recentChatPanel.setLayout(new BorderLayout()); // Use BorderLayout to make the label fill the entire panel
 
+// Recent Chat Label
         JLabel recentChatLabel = new JLabel();
-        recentChatLabel.setFont(new java.awt.Font("Segoe UI", 0, 24)); // Set font
-        recentChatLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        recentChatLabel.setFont(new java.awt.Font("Segoe UI", Font.BOLD, 18)); // Set font
+        recentChatLabel.setHorizontalAlignment(SwingConstants.LEFT);
         recentChatLabel.setText(userName);
+        recentChatLabel.setForeground(Color.white);
         recentChatLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+// Add left padding to the label
+        recentChatLabel.setBorder(BorderFactory.createEmptyBorder(0, 18, 0, 0)); // Add 18px left padding
 
         if (iconPath != null) {
             recentChatLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource(iconPath)));
@@ -753,7 +983,6 @@ class ServerListener implements Runnable {
         recentChatPanel.add(recentChatLabel, BorderLayout.CENTER);
 
         recentChatMainPanel.add(Box.createVerticalStrut(10));
-
         recentChatMainPanel.add(recentChatPanel);
 
         recentChatMainPanel.revalidate();
@@ -764,7 +993,11 @@ class ServerListener implements Runnable {
     private void receiveFile(String incomingMessage) {
         String fileName = XMLHandler.extractTag(incomingMessage, "name");
         String size = XMLHandler.extractTag(incomingMessage, "size");
-        displayFile(fileName, size);
+
+        displayFile(fileName, Long.parseLong(size));
+
+        JScrollBar verticalScrollBar = currentChatBodyPanel.getVerticalScrollBar();
+        SwingUtilities.invokeLater(() -> verticalScrollBar.setValue(verticalScrollBar.getMaximum()));
 
     }
 
@@ -797,40 +1030,85 @@ class ServerListener implements Runnable {
 //            displayFile();
             fos.close();
 
-        } catch (Exception e) {
-
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
-//    private void displayFile(String fileName, String size) {
-//        JPanel filePanel = new FilePanel(fileName, size);
-//        chatPanel.add(filePanel);
-//        chatPanel.revalidate();
-//        chatPanel.repaint();
-//    }
-    private void displayFile(String fileName, String size) {
+    private void displayFile(String fileName, Long size) {
         // Create the FilePanel
-        JPanel filePanel = new FilePanel(fileName, size);
+        JPanel filePanel = new FilePanel(fileName, convertBytes(size));
 
         // Set alignment to left
         filePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Wrap filePanel in a container
         JPanel container = new JPanel();
-        container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
-        container.setBackground(chatPanel.getBackground()); // Match chatPanel background
+        container.setLayout(new BoxLayout(container, BoxLayout.X_AXIS));
+        container.setBackground(new Color(54, 57, 63)); // Match chatPanel background
         container.setAlignmentX(Component.LEFT_ALIGNMENT);
+        container.setMaximumSize(new Dimension(chatPanel.getWidth(), filePanel.getPreferredSize().height + 20)); // Ensure it only takes up the necessary vertical space
 
-        // Add filePanel to the container
-        container.add(filePanel);
+        // Add left margin
+        container.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0)); // Add 20px left margin
+
+        // User Avatar
+        JLabel avatarLabel = new JLabel(new ImageIcon(getClass().getResource("/chatapplication/chatMessageUserLogo.PNG"))); // Replace with actual sender profile image path
+        avatarLabel.setPreferredSize(new Dimension(50, 50));
+        avatarLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 10));
+
+        // File Content Panel
+        JPanel fileContentPanel = new JPanel();
+        fileContentPanel.setLayout(new BoxLayout(fileContentPanel, BoxLayout.Y_AXIS));
+        fileContentPanel.setBackground(new Color(54, 57, 63)); // Discord dark theme background
+        fileContentPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5)); // Reduced padding
+        fileContentPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // File Name and Size
+        JLabel fileNameLabel = new JLabel(fileName);
+        fileNameLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        fileNameLabel.setForeground(Color.WHITE);
+
+        JPanel headerPanel = new JPanel();
+        headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.X_AXIS));
+        headerPanel.setBackground(new Color(54, 57, 63)); // Discord dark theme background
+        headerPanel.add(fileNameLabel);
+        headerPanel.add(Box.createHorizontalStrut(5));
+        headerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // Add header to file content panel
+        fileContentPanel.add(headerPanel);
+
+        // Add file panel to file content panel
+        fileContentPanel.add(filePanel);
+
+        // Add avatar and file content to container
+        container.add(avatarLabel);
+        container.add(fileContentPanel);
 
         // Add spacing below the panel
-        container.add(Box.createRigidArea(new Dimension(0, 10)));
-
-        // Add container to the chatPanel
         chatPanel.add(container);
+        chatPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        // Refresh chat panel
         chatPanel.revalidate();
         chatPanel.repaint();
+
+        JScrollBar verticalScrollBar = currentChatBodyPanel.getVerticalScrollBar();
+        SwingUtilities.invokeLater(() -> verticalScrollBar.setValue(verticalScrollBar.getMaximum()));
+    }
+
+    public static String convertBytes(long bytes) {
+        String[] units = {"B", "KB", "MB", "GB", "TB", "PB", "EB"};
+        int unitIndex = 0;
+        double value = bytes;
+        while (value >= 1024 && unitIndex < units.length - 1) {
+            value /= 1024;
+            unitIndex++;
+        }
+        return String.format("%.1f %s", value, units[unitIndex]);
     }
 
 }

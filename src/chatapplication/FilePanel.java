@@ -4,6 +4,8 @@
  */
 package chatapplication;
 
+import java.awt.Color;
+
 /**
  *
  * @author manib
@@ -34,26 +36,32 @@ public class FilePanel extends javax.swing.JPanel {
         fileNameLabel = new javax.swing.JLabel();
         fileSizeLabel = new javax.swing.JLabel();
         fileExtensionLabel = new javax.swing.JLabel();
-        fileDownloadButton = new javax.swing.JButton();
-        jSeparator1 = new javax.swing.JSeparator();
+        downloadIcon = new javax.swing.JLabel();
 
         jButton1.setText("jButton1");
 
-        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
+        setBackground(new Color(54, 57, 63));
+
+        jPanel1.setBackground(new java.awt.Color(47, 49, 54));
 
         fileIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/chatapplication/fileFolder.png"))); // NOI18N
 
         fileNameLabel.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        fileNameLabel.setForeground(new java.awt.Color(51, 153, 255));
         fileNameLabel.setText("Filename.PDF");
 
+        fileSizeLabel.setForeground(new java.awt.Color(255, 255, 255));
         fileSizeLabel.setText("32KB");
 
+        fileExtensionLabel.setForeground(new java.awt.Color(255, 255, 255));
         fileExtensionLabel.setText("PDF");
 
-        fileDownloadButton.setText("Download");
-        fileDownloadButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                fileDownloadButtonActionPerformed(evt);
+        downloadIcon.setBackground(new java.awt.Color(255, 255, 255));
+        downloadIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/chatapplication/downloadIcon.png"))); // NOI18N
+        downloadIcon.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        downloadIcon.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                downloadIconMouseClicked(evt);
             }
         });
 
@@ -62,41 +70,33 @@ public class FilePanel extends javax.swing.JPanel {
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(20, 20, 20)
+                .addGap(24, 24, 24)
                 .addComponent(fileIcon)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(fileNameLabel)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(fileSizeLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(fileExtensionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addComponent(jSeparator1, javax.swing.GroupLayout.Alignment.TRAILING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(21, Short.MAX_VALUE)
-                .addComponent(fileDownloadButton, javax.swing.GroupLayout.PREFERRED_SIZE, 345, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(19, 19, 19))
+                        .addComponent(fileExtensionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(fileNameLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 131, Short.MAX_VALUE)
+                .addComponent(downloadIcon, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(14, 14, 14)
-                        .addComponent(fileIcon))
+                .addGap(14, 14, 14)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addContainerGap()
                         .addComponent(fileNameLabel)
-                        .addGap(0, 0, 0)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(fileSizeLabel)
-                            .addComponent(fileExtensionLabel))))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(fileDownloadButton, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(12, Short.MAX_VALUE))
+                            .addComponent(fileExtensionLabel)))
+                    .addComponent(fileIcon))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addComponent(downloadIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -105,27 +105,27 @@ public class FilePanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(9, 9, 9))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void fileDownloadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileDownloadButtonActionPerformed
+    private void downloadIconMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_downloadIconMouseClicked
         ChatScreen.sendReceiveFileCommand(this.fileNameLabel.getText());
-    }//GEN-LAST:event_fileDownloadButtonActionPerformed
-
+    }//GEN-LAST:event_downloadIconMouseClicked
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton fileDownloadButton;
+    private javax.swing.JLabel downloadIcon;
     private javax.swing.JLabel fileExtensionLabel;
     private javax.swing.JLabel fileIcon;
     private javax.swing.JLabel fileNameLabel;
     private javax.swing.JLabel fileSizeLabel;
     private javax.swing.JButton jButton1;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JSeparator jSeparator1;
     // End of variables declaration//GEN-END:variables
 }
